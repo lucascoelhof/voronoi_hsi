@@ -1,0 +1,60 @@
+define block model
+(
+  size [0.5 0.5 0.5]
+  gui_nose 0
+)
+
+define erratic position
+(
+  #size [0.415 0.392 0.25]
+  size [0.5 0.5 0.5]
+  origin [-0.05 0 0 0]
+  gui_nose 1
+  drive "diff"
+)
+
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+
+  gui_outline 0
+  gripper_return 0
+  fiducial_return 0
+)
+
+# set the resolution of the underlying raytrace model in meters
+resolution 0.02
+
+interval_sim 100  # simulation timestep in milliseconds
+
+
+window
+( 
+  size [ 800.000 600.000 ] 
+
+  rotate [ 0.000 0.0 ]
+  center [ 10.5  8 ]
+  scale 20 
+)
+
+# load an environment bitmap
+floorplan
+( 
+  name "willow"
+  bitmap "map.pgm"
+  size [20 20 0.5]
+  pose [ 10 10 0 0 ]
+)
+
+# throw in two robots
+erratic( pose [ 10 3.266 0 180.000 ] name "robot0" color "firebrick")
+erratic( pose [ 3.277 2.266 0 180.000 ] name "robot1" color "gold")
+erratic( pose [ 7.2 6.6 0 180.000 ] name "robot2" color "steel blue")
+erratic( pose [ 11.277 6.6 0 180.000 ] name "robot3" color "sea green")

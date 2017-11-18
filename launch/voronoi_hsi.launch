@@ -1,0 +1,7 @@
+<launch>
+    <include file="$(find voronoi_hsi)/launch/map_server.launch"/>
+    <include file="$(find voronoi_hsi)/launch/voronoi_params.launch"/>
+
+    <node name="stage" pkg="stage_ros" type="stageros" args="$(find voronoi_hsi)/worlds/four_voronoi.world" respawn="true" output = "screen"/>
+
+</launch>

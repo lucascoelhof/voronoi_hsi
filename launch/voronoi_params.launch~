@@ -1,0 +1,67 @@
+<launch>
+    <param name="graph/map" type="string" 
+           value="$(find voronoi_hsi)/map.pgm" />
+
+	<param name="graph/outmap" type="string" 
+           value="$(find voronoi_hsi)/result.ppm" />
+
+    <!-- Discretization - obstacle value threshold -->
+    <param name="graph/threshold" type="int" value="250"/>
+
+    <!-- resolution of the map -->
+    <param name="graph/resolution" type="double" value="0.05"/>
+
+    <!-- discretization of the pixels -->
+    <param name="graph/discretization" type="double" value="5.0"/>
+
+	<param name="voronoi/speedTopic" type="string" value="cmd_vel"/>
+
+	<param name="voronoi/id" type="int" value="1"/>
+
+	<param name="voronoi/poseTopic" type="string" value="base_pose_ground_truth"/>
+
+	<param name="voronoi/robotConfFileName" type="string" value="/home/lucas/catkin_ws/src/voronoi/voronoi.conf"/>
+
+	<param name="voronoi/imagesDir" type="string" value="/home/lucas/catkin_ws/src/voronoi/images"/>
+
+    <param name="voronoi/kp" type="double" value="0.5"/>
+
+    <param name="voronoi/kw" type="double" value="5"/>
+
+    <param name="voronoi/kwp" type="double" value="50"/>
+
+    <param name="voronoi/d" type="double" value="0.1"/>
+
+    <param name="voronoi/num_robots" type="int" value="4"/>
+
+    <param name="voronoi/robot0/r" type="int" value="178"/>
+    <param name="voronoi/robot0/g" type="int" value="34"/>
+    <param name="voronoi/robot0/b" type="int" value="34"/>
+    <param name="voronoi/robot0/w" type="double" value="1"/>
+    <param name="voronoi/robot0/xd" type="double" value="1"/>
+    <param name="voronoi/robot0/yd " type="double" value="1"/>
+
+    <param name="voronoi/robot1/r" type="int" value="255"/>
+    <param name="voronoi/robot1/g" type="int" value="223"/>
+    <param name="voronoi/robot1/b" type="int" value="0"/>
+    <param name="voronoi/robot1/w" type="double" value="1"/>
+    <param name="voronoi/robot1/xd" type="double" value="1"/>
+    <param name="voronoi/robot1/yd " type="double" value="1"/>
+
+    <param name="voronoi/robot2/r" type="int" value="70"/>
+    <param name="voronoi/robot2/g" type="int" value="130"/>
+    <param name="voronoi/robot2/b" type="int" value="180"/>
+    <param name="voronoi/robot2/w" type="double" value="1"/>
+    <param name="voronoi/robot2/xd" type="double" value="1"/>
+    <param name="voronoi/robot2/yd " type="double" value="1"/>
+
+    <param name="voronoi/robot3/r" type="int" value="84"/>
+    <param name="voronoi/robot3/g" type="int" value="255"/>
+    <param name="voronoi/robot3/b" type="int" value="159"/>
+    <param name="voronoi/robot3/w" type="double" value="1"/>
+    <param name="voronoi/robot3/xd" type="double" value="1"/>
+    <param name="voronoi/robot3/yd " type="double" value="1"/>
+   
+
+	
+</launch>
