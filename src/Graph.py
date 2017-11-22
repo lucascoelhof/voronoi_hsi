@@ -49,8 +49,8 @@ class Graph:
         self.resolution = resolution
         self.nodes = np.empty((self.height, self.width), dtype=object)
 
-        for i in range(0, self.height):
-            for j in range(0, self.width):
+        for i in range(0, self.width):
+            for j in range(0, self.height):
                 node = Node()
                 node.indexes = [i, j]
                 node.set_pose(self.get_pose(i, j))
@@ -60,13 +60,13 @@ class Graph:
                     node.valid = False
                 self.nodes[i][j] = node
 
-        for i in range(0, self.height):
-            for j in range(0, self.width):
+        for i in range(0, self.width):
+            for j in range(0, self.height):
                 if self.nodes[i, j].valid:
                     min_i = max(0, i - 1)
-                    max_i = min(self.height - 1, i + 1) + 1
+                    max_i = min(self.width - 1, i + 1) + 1
                     min_j = max(0, j - 1)
-                    max_j = min(self.width - 1, j + 1) + 1
+                    max_j = min(self.height - 1, j + 1) + 1
 
                     neighbors = self.nodes[min_i:max_i, min_j:max_j].flatten()
                     for n in neighbors:
@@ -85,6 +85,6 @@ class Graph:
 
     def clear_graph(self):
 
-        for i in range(0, self.height):
-            for j in range(0, self.width):
+        for i in range(0, self.width):
+            for j in range(0, self.height):
                 self.nodes[i, j].clear()
