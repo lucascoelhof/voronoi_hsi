@@ -12,20 +12,20 @@ class GraphTests(unittest.TestCase):
 
     def test_init(self):
         try:
-            graph = Graph('static_map')
+            graph = Graph('static_map', "/map")
         except Exception as e:
             self.fail(UtilTests.error_str(self.test_init.__name__, e))
 
     def test_creation_graph(self):
         try:
-            graph = Graph('static_map')
+            graph = Graph('static_map', "/map")
 
         except Exception as e:
             self.fail(UtilTests.error_str(self.test_creation_graph.__name__, e))
 
     def test_get_node(self):
         try:
-            graph = Graph('static_map')
+            graph = Graph('static_map', "/map")
             graph.nodes[10, 10].cost = 10
             pose = graph.get_pose(10, 10)
             n = graph.get_node(pose)
@@ -33,24 +33,12 @@ class GraphTests(unittest.TestCase):
         except Exception as e:
             self.fail(UtilTests.error_str(self.test_get_node.__name__, e))
 
-    def test_num_neighbors(self):
-        try:
-            graph = Graph('static_map')
-            for i in range(0, graph.height):
-                for j in range(0, graph.width):
-                    neighbors = graph.nodes[i, j].neighbors
-                    if neighbors is None:
-                        continue
-                    self.assertLess(len(neighbors), 9, "Node has more than 8 neighbors, impossible")
-        except Exception as e:
-            self.fail(UtilTests.error_str(self.test_num_neighbors.__name__, e))
-
     def test_connectivity_neighbors(self):
         try:
-            graph = Graph('static_map')
-            n1 = graph.nodes[200, 200]
-            n2 = graph.nodes[201, 200]
-            n3 = graph.nodes[198, 198]
+            graph = Graph('static_map', "/map")
+            n1 = graph.nodes[20, 20]
+            n2 = graph.nodes[21, 20]
+            n3 = graph.nodes[18, 18]
 
             self.assertGreater(len(n1.neighbors), 4)
             self.assertGreater(len(n2.neighbors), 4)
@@ -67,10 +55,9 @@ class GraphTests(unittest.TestCase):
 
     def test_clean(self):
         try:
-            graph = Graph('static_map')
+            graph = Graph('static_map', "/map")
             n1 = graph.nodes[10, 10]
             n1.cost = 10
-
             graph.clear_graph()
             self.assertNotEqual(n1.cost, 10)
             self.assertEquals(n1.cost, float('inf'))

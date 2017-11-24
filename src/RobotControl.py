@@ -4,6 +4,9 @@ import rospy
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 
+from ControlLaw import ControlLawDiff
+import Util
+
 
 class RobotControl(Thread):
 
@@ -22,22 +25,26 @@ class RobotControl(Thread):
         self.pose = self.pose_updater()
 
     def set_pose_updater(self, pose_updater):
+        # type: (function) -> RobotControl
         self.pose_updater = pose_updater
         return self
 
     def set_speed_publisher(self, speed_pub):
+        # type: (rospy.Publisher) -> RobotControl
         self.speed_pub = speed_pub
         return self
 
     def set_control_law(self, control_law):
+        # type: (ControlLawDiff) -> RobotControl
         self.control_law = control_law
         return self
 
     def set_goal(self, goal):
+        # type: (list) -> None
         self.goal = goal
 
     def run(self):
-        rate = rospy.Rate(self.loop_rate)
+        rate = Util.Rate(self.loop_rate)
         while not rospy.is_shutdown():
             if self.goal is not None and len(self.goal) > 0:  # and self.goal check if the list is not empty
                 v, w = self.control_law.get_speed(self.pose_updater(), self.goal)

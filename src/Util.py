@@ -2,6 +2,7 @@ import numpy as np
 
 import tf
 import rospy
+import time
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Quaternion
 from tf import transformations as tf_trans
@@ -64,3 +65,23 @@ def publish_tf_transformation(msg, frame, base_frame):
                               frame,
                               base_frame)
 
+
+class Rate:
+
+    def __init__(self, rate=10):
+        # type: (float) -> Rate
+        self.last_time = None
+        self.rate = rate
+        self.time = 1/float(rate)
+
+    def sleep(self):
+        time_now = time.time()
+        if self.last_time is None:
+            time.sleep(self.time)
+        else:
+            time_diff = time_now - self.last_time
+            if time_diff > self.time:
+                print("Won't sleep, last loop took " + str(time_diff) + " seconds. Loop time is " + str(self.time))
+            else:
+                time.sleep(time_diff)
+        self.last_time = time.time()
