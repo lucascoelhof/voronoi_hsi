@@ -1,16 +1,13 @@
 import json
 
-import tf
 import rospy
-
+from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Pose
 from tf.transformations import euler_from_quaternion
 
 import Util
 from RobotControl import RobotControl
-from ControlLaw import ControlLawDiff
 
 
 class Robot:

@@ -1,9 +1,11 @@
+import copy
 import math
 import numpy as np
 
 import rospy
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid
+from geometry_msgs.msg import Pose
 
 
 from Node import Node
@@ -26,15 +28,29 @@ class Graph:
         self.width = msg.info.width
         self.height = msg.info.height
         self.resolution = msg.info.resolution
-        self.occ_grid = np.mat(msg.data).reshape(self.height, self.width)
+        self.occ_grid = np.mat(msg.data).reshape(self.height, self.width)  # type: OccupancyGrid
 
     def get_node(self, pose):
         """
         Gets a node based on the pose provided as an array [x,y]
         :type pose: []
         """
-        xc = math.floor(pose[0] / self.resolution)
-        yc = math.floor(pose[1] / self.resolution)
+        p = copy.deepcopy(pose)
+        p_arr = []
+
+        if type(p) is Pose:   # convert
+            x = p.position.x
+            y = p.position.y
+            p_arr = [x, y]
+        elif isinstance(p, list):
+            if not p or len(p) < 2:
+                return None
+            p_arr = p
+        else:
+            raise ValueError("Unrecognized type " + str(type(pose)) + " for conversion from node to pose")
+
+        xc = math.floor(p_arr[0] / self.resolution)
+        yc = math.floor(p_arr[1] / self.resolution)
         return self.nodes[xc][yc]
 
     def build_graph(self, height, width, resolution):
