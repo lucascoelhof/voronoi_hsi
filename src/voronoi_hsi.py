@@ -22,7 +22,7 @@ def plot_h(h, d):
 
 
 def main():
-    rospy.init_node('voronoi_hsi', anonymous=True)
+    rospy.init_node('voronoi_hsi')
     rate = rospy.Rate(1)
     iterations = 0
 

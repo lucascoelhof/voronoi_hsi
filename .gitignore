@@ -8,3 +8,6 @@
 \.idea/voronoi_hsi\.iml
 
 \.idea/workspace\.xml
+
+src/*.pyc
+*.pyc
