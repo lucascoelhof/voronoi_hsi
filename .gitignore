@@ -11,3 +11,9 @@
 
 src/*.pyc
 *.pyc
+
+\.idea/dictionaries/lucas\.xml
+
+\.idea/dictionaries/
+
+.idea/*

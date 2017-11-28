@@ -3,13 +3,13 @@ class Node:
 
     def __init__(self):
         self.pose = [0, 0]
-        self.indexes = [] # indexes on graph matrix
+        self.indexes = []  # indexes on graph matrix
         self.cost = float('inf')  # cost for modified dijkstra algorithm
-        self.power_dist = float('inf') # power dist used by tesselation and control computation on priority queue
-        self.robot_id = -1 # id of the robot that owns this node, used by tesselation and control computation algorithm
-        self.neighbors = [] # neighbor nodes on graph
-        self.valid = False # true if the node has no obstacle, this information comes from occupancy grid
-        self.s = None # used by tesselation and control computation algorithm to identify the direction to go
+        self.power_dist = float('inf')  # power dist used by tesselation and control computation on priority queue
+        self.robot_id = -1  # id of the robot that owns this node, used by tesselation and control computation algorithm
+        self.neighbors = []  # neighbor nodes on graph
+        self.valid = False  # true if the node has no obstacle, this information comes from occupancy grid
+        self.s = None  # type: Node
 
     def clear(self):
         self.cost = float('inf')
