@@ -170,6 +170,7 @@ class Voronoi:
     def publish_tesselation_image(self):
         if self.tesselation_image_pub is None:
             raise ValueError("Tesselation Image publisher not initialized")
+        # http://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython
         self.tesselation_image_pub.publish(self.tesselation_image)
 
     def set_output_publishers(self):
