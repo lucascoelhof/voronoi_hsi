@@ -97,7 +97,7 @@ class Voronoi:
 
         for robot in self.robots.values():  # type: Robot
             node = self.graph.get_node(robot.get_pose_array())  # type: Node
-            node.cost = np.linalg.norm(np.subtract(node.pose, robot.get_pose_array()))
+            node.cost = 0  # np.linalg.norm(np.subtract(node.pose, robot.get_pose_array()))
             node.power_dist = node.cost - pow(robot.weight, 2)
             robot.control.control_law.clear_i()
             self.priority_queue.put((node.power_dist, node, robot.id))
@@ -162,7 +162,7 @@ class Voronoi:
         max_dpi = 0
         best_node = None
         for n in robot_node.neighbors:
-            dpi = math.fabs(np.dot(i_func, (np.subtract(robot_node.pose, n.pose))))
+            dpi = np.dot(i_func, (np.subtract(n.pose, robot_node.pose)))
             if dpi > max_dpi:
                 max_dpi = dpi
                 best_node = n

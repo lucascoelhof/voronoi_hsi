@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import rospy
 
 from Voronoi import Voronoi
-
+import Util
 
 h_func = []
 time_arr = []
@@ -23,7 +23,7 @@ def plot_h(h, d):
 
 def main():
     rospy.init_node('voronoi_hsi')
-    rate = rospy.Rate(2)
+    rate = Util.Rate(0.5)
     iterations = 0
 
     start_time = time.time()
@@ -40,7 +40,7 @@ def main():
         h = voronoi.tesselation_and_control_computation()
         d = time.time() - start_time
         iterations += 1
-        plot_h(h, d)
+        # plot_h(h, d)
         rate.sleep()
 
 
