@@ -4,8 +4,8 @@ import rospy
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 
-from ControlLaw import ControlLawDiff
 import Util
+from ControlLaw import ControlLawDiff
 
 
 class RobotControl(Thread):

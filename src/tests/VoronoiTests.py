@@ -1,9 +1,11 @@
-from src.Voronoi import Voronoi
-import unittest
-import UtilTests
-import rospy
 import time
 import subprocess
+import unittest
+
+import rospy
+
+import UtilTests
+from src.Voronoi import Voronoi
 
 
 class VoronoiTests(unittest.TestCase):

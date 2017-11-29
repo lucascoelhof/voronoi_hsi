@@ -17,6 +17,7 @@ class Node:
         self.robot_id = -1
 
     def set_pose(self, pose):
+        # type: (list) -> None
         self.pose = pose
 
     def is_neighbor(self, n):

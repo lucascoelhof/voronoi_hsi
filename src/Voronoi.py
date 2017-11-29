@@ -3,11 +3,9 @@ import math
 import numpy as np
 from Queue import PriorityQueue
 
-import cv2
 import rospy
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
-from cv_bridge import CvBridge, CvBridgeError
 
 import Util
 from Node import Node
@@ -92,7 +90,6 @@ class Voronoi:
         return pow(x, 2) - pow(r, 2)
 
     def tesselation_and_control_computation(self):
-
         tic()
 
         del self.priority_queue
@@ -111,8 +108,9 @@ class Voronoi:
         h_func = 0
 
         iterations = 0
+
         while not self.priority_queue.empty():
-            iterations=iterations + 1
+            iterations = iterations + 1
             elem = self.priority_queue.get()
             q = elem[1]  # type: Node
             if q.power_dist == float('inf'):
@@ -156,7 +154,7 @@ class Voronoi:
 
         self.publish_tesselation_image()
         self.clear()
-        rospy.loginfo("Tesselation finished with iter= " + str(iterations) + " and " + str(toc()) + "s")
+        rospy.loginfo("Tesselation finished with iter=" + str(iterations) + " and " + str(toc()) + "s")
         return h_func
 
     def get_best_aligned_node(self, i_func, robot_node):
@@ -175,6 +173,7 @@ class Voronoi:
         self.tesselation_image = np.copy(self.base_image)
 
     def mark_node(self, node, color):
+        # type: (Node, list) -> None
         coord = node.indexes
         self.tesselation_image[coord[0], coord[1]] = color
 

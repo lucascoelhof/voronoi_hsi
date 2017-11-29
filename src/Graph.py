@@ -4,9 +4,8 @@ import numpy as np
 
 import rospy
 from nav_msgs.srv import GetMap
-from nav_msgs.msg import OccupancyGrid
 from geometry_msgs.msg import Pose
-
+from nav_msgs.msg import OccupancyGrid
 
 from Node import Node
 
@@ -25,6 +24,7 @@ class Graph:
         self.build_graph(occ_g.map.info.height, occ_g.map.info.width, occ_g.map.info.resolution)
 
     def occ_grid_callback(self, msg):
+        # type: (OccupancyGrid) -> None
         self.width = msg.info.width
         self.height = msg.info.height
         self.resolution = msg.info.resolution
@@ -33,7 +33,7 @@ class Graph:
     def get_node(self, pose):
         """
         Gets a node based on the pose provided as an array [x,y]
-        :type pose: []
+        :type pose: list
         """
         p = copy.deepcopy(pose)
         p_arr = []

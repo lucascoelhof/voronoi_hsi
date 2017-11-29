@@ -1,5 +1,4 @@
 import traceback
-import json
 
 
 def error_str(func_name, exception):

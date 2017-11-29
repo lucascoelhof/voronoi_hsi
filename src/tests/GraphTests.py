@@ -1,11 +1,12 @@
-from src.Graph import Graph
-import unittest
-import UtilTests
-import rospy
 import time
+import unittest
 import subprocess
-from nav_msgs.srv import GetMap
+
+import rospy
 import rosnode
+
+import UtilTests
+from src.Graph import Graph
 
 
 class GraphTests(unittest.TestCase):

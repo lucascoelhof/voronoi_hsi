@@ -1,9 +1,9 @@
 import json
 
 import rospy
+from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion
 
 import Util
@@ -37,9 +37,11 @@ class Robot:
         self.control.start()
 
     def set_pose_subscriber(self, topic):
+        # type: (basestring) -> None
         self.pose_sub = rospy.Subscriber(topic, Odometry, self.pose_callback)
 
     def publish_speed(self, v, w):
+        # type: (float, float) -> None
         if self.speed_pub is None:
             raise ValueError("geometry_msgs/Twist publisher for robot " + self.id + " not initialized.")
         else:
@@ -51,6 +53,7 @@ class Robot:
             self.speed_pub.publish(speed)
 
     def pose_callback(self, msg):
+        # type: (float) -> None
         self.pose = msg.pose.pose
         Util.publish_tf_transformation(self.pose, "robot_" + str(self.id) + "/odom", "/map")
 
@@ -74,6 +77,7 @@ class Robot:
         return self.__repr__()
 
     def set_pose(self, arr):
+        # type: (list) -> None
         self.pose.position.x = arr[0]
         self.pose.position.y = arr[1]
 
