@@ -35,7 +35,7 @@ def main():
                 x = random.uniform(bounds[0], bounds[1])
                 y = random.uniform(bounds[2], bounds[3])
                 robot.control.set_goal([x, y])
-                print("Robot " + str(robot.id) + " goal now is:", str(x), str(y))
+                rospy.loginfo("Robot " + str(robot.id) + " goal now is:", str(x), str(y))
 
 
 if __name__ == '__main__':

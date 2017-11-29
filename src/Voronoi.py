@@ -9,9 +9,11 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
 from cv_bridge import CvBridge, CvBridgeError
 
+import Util
 from Node import Node
 from Graph import Graph
 from Robot import Robot
+from Util import tic, toc
 from ControlLaw import ControlLawVoronoi
 
 
@@ -27,8 +29,8 @@ class Voronoi:
         self.density = None
         self.density_sub = None  # type: rospy.Publisher
 
-        self.base_image = None  # type: Image
-        self.tesselation_image = None  # type: Image
+        self.base_image = None
+        self.tesselation_image = None
         self.tesselation_image_pub = None  # type: rospy.Publisher
 
         self.priority_queue = PriorityQueue()
@@ -59,20 +61,19 @@ class Voronoi:
         self.base_image[:, :, 0] = self.graph.occ_grid
         self.base_image[:, :, 1] = self.graph.occ_grid
         self.base_image[:, :, 2] = self.graph.occ_grid
-        self.tesselation_image = Image()
-        self.tess
-        np.copy(self.base_image)
+        self.tesselation_image = np.copy(self.base_image)
 
     def clear_density_dist(self):
         self.density = np.full((self.graph.height, self.graph.width), 1)
 
     def density_callback(self, msg):
+        # type: (Float64MultiArray) -> None
         try:
             width = msg.layout.dim[0].size
             height = msg.layout.dim[1].size
             self.density = np.mat(msg.data).reshape(height, width)
         except:
-            print("Error while getting density info")
+            rospy.logerr("Error while getting density info")
             pass
 
     def set_robot_subscribers(self):
@@ -87,17 +88,20 @@ class Voronoi:
 
     @staticmethod
     def power_dist(x, r):
+        # type: (float,float) -> float
         return pow(x, 2) - pow(r, 2)
 
     def tesselation_and_control_computation(self):
 
+        tic()
+
         del self.priority_queue
         self.priority_queue = PriorityQueue()
 
-        for robot in self.robots.values():
+        for robot in self.robots.values():  # type: Robot
             node = self.graph.get_node(robot.get_pose_array())  # type: Node
-            node.cost = 0
-            node.power_dist = - pow(robot.weight, 2)
+            node.cost = np.linalg.norm(np.subtract(node.pose, robot.get_pose_array()))
+            node.power_dist = node.cost - pow(robot.weight, 2)
             robot.control.control_law.clear_i()
             self.priority_queue.put((node.power_dist, node, robot.id))
             for q in node.neighbors:
@@ -106,7 +110,9 @@ class Voronoi:
 
         h_func = 0
 
+        iterations = 0
         while not self.priority_queue.empty():
+            iterations=iterations + 1
             elem = self.priority_queue.get()
             q = elem[1]  # type: Node
             if q.power_dist == float('inf'):
@@ -119,7 +125,7 @@ class Voronoi:
             robot_node = self.graph.get_node(robot.get_pose_array())  # type: Node
 
             h_func = h_func + (pow(q.power_dist, 2) + pow(robot.weight, 2)) * self.density[q.indexes[0], q.indexes[1]] * pow(self.graph.resolution, 2)
-            self.mark_node(robot_node, robot.color)
+            self.mark_node(q, robot.color)
 
             if q is not robot_node:
                 i_cl = self.density[q.indexes[0], q.indexes[1]] * q.cost * np.subtract(q.s.pose, robot_node.pose)
@@ -136,20 +142,21 @@ class Voronoi:
                     self.priority_queue.put((n.power_dist, n, robot.id))
 
         for robot in self.robots.values():  # type: Robot
-            print("\n\nRobot " + str(robot.id))
+            rospy.logdebug("\n\nRobot " + str(robot.id))
             control_integral = robot.control.control_law.get_control_integral()
-            print("Control integral: " + str(control_integral))
+            rospy.logdebug("Control integral: " + str(control_integral))
             robot_node = self.graph.get_node(robot.get_pose_array())
             best_node = self.get_best_aligned_node(control_integral, robot_node)  # type: Node
             if best_node is None:
-                print("Best node is none")
+                rospy.logdebug("Best node is none")
                 continue
             else:
-                print("Goal: " + str(best_node.pose))
+                rospy.logdebug("Goal: " + str(best_node.pose))
                 robot.control.set_goal(best_node.pose)
 
-        #self.publish_tesselation_image()
-        self.graph.clear_graph()
+        self.publish_tesselation_image()
+        self.clear()
+        rospy.loginfo("Tesselation finished with iter= " + str(iterations) + " and " + str(toc()) + "s")
         return h_func
 
     def get_best_aligned_node(self, i_func, robot_node):
@@ -163,6 +170,10 @@ class Voronoi:
                 best_node = n
         return best_node
 
+    def clear(self):
+        self.graph.clear_graph()
+        self.tesselation_image = np.copy(self.base_image)
+
     def mark_node(self, node, color):
         coord = node.indexes
         self.tesselation_image[coord[0], coord[1]] = color
@@ -170,8 +181,8 @@ class Voronoi:
     def publish_tesselation_image(self):
         if self.tesselation_image_pub is None:
             raise ValueError("Tesselation Image publisher not initialized")
-        # http://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython
-        self.tesselation_image_pub.publish(self.tesselation_image)
+        image_message = Util.numpy_matrix_to_rosimg(np.rot90(self.tesselation_image), "rgb8")
+        self.tesselation_image_pub.publish(image_message)
 
     def set_output_publishers(self):
         try:
@@ -181,11 +192,9 @@ class Voronoi:
                 topic = self.topic_info["tesselation_topic"]
                 self.tesselation_image_pub = rospy.Publisher(topic, Image, queue_size=1)
         except KeyError as e:
-            print(str(e))
+            rospy.logerr("Error while setting tesselation publishers: " + str(e))
         except Exception as e:
-            print(str(e))
-
-
+            rospy.logerr("Error while setting tesselation publishers: " + str(e))
 
     def get_params(self):
         self.get_dir_info_param()
@@ -201,30 +210,30 @@ class Voronoi:
                     robot = Robot(r["id"], r["weight"], r["color"])
                     self.robots[robot.id] = robot
         except KeyError:
-            print("Parameter robots not found. Exiting.")
+            rospy.logfatal("Parameter robots not found. Exiting.")
             sys.exit(1)
         except:
-            print("A non recognized exception raised while getting robots parameter. Exiting")
+            rospy.logfatal("A non recognized exception raised while getting robots parameter. Exiting")
             sys.exit(1)
 
     def get_topic_info_param(self):
         try:
             self.topic_info = rospy.get_param("/voronoi/topic_info")
         except KeyError:
-            print("Parameter topic_info not found. Exiting.")
+            rospy.logfatal("Parameter topic_info not found. Exiting.")
             sys.exit(1)
         except:
-            print("A non recognized exception raised while getting topic_info parameter. Exiting")
+            rospy.logfatal("A non recognized exception raised while getting topic_info parameter. Exiting")
             sys.exit(1)
 
     def get_dir_info_param(self):
         try:
             self.dir_info = rospy.get_param("/voronoi/dir_info")
         except KeyError:
-            print("Parameter dir_info not found. Exiting.")
+            rospy.logfatal("Parameter dir_info not found. Exiting.")
             sys.exit(1)
         except:
-            print("A non recognized exception raised while getting dir_info parameter. Exiting")
+            rospy.logfatal("A non recognized exception raised while getting dir_info parameter. Exiting")
             sys.exit(1)
 
     def get_robot_control_info_param(self):
@@ -236,10 +245,10 @@ class Voronoi:
                                                 self.robot_control_info["kw"])
                 robot.control.set_control_law(control_law)
         except KeyError:
-            print("Parameter robot_control_info not found. Exiting.")
+            rospy.logfatal("Parameter robot_control_info not found. Exiting.")
             sys.exit(1)
         except Exception as e:
-            print("A non recognized exception raised while getting robot_control_info parameter. Exiting. " + str(e))
+            rospy.logfatal("A non recognized exception raised while getting robot_control_info parameter. Exiting. " + str(e))
             sys.exit(1)
 
     def image_builder(self):

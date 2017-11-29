@@ -18,12 +18,12 @@ def plot_h(h, d):
     h1.set_xdata(h_func)
     h1.set_ydata(time_arr)
     plt.draw()
-    print(h, d)
+    rospy.loginfo(str([h, d]))
 
 
 def main():
     rospy.init_node('voronoi_hsi')
-    rate = rospy.Rate(1)
+    rate = rospy.Rate(2)
     iterations = 0
 
     start_time = time.time()
@@ -32,7 +32,7 @@ def main():
 
     time.sleep(2)
 
-    print("Starting Voronoi")
+    rospy.loginfo("Starting Voronoi")
 
     voronoi.tesselation_and_control_computation()
 
