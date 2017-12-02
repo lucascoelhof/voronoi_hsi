@@ -6,5 +6,6 @@ topic_info: {
   pose_topic: "base_pose_ground_truth",
   robot_prefix: "robot_",
   density_topic: "/voronoi/density_dist",
-  tesselation_topic: "/voronoi/tesselation"
+  tesselation_topic: "/voronoi/tesselation",
+  resize: 20
 }
