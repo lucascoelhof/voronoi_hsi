@@ -1,11 +1,13 @@
+#! /usr/bin/env python
+
 import time
 import numpy as np
 import matplotlib.pyplot as plt
 
 import rospy
 
-from Voronoi import Voronoi
 import Util
+from Voronoi import Voronoi
 
 h_func = []
 time_arr = []
@@ -19,7 +21,6 @@ def plot_h(h, d):
     h1.set_ydata(time_arr)
     plt.draw()
     rospy.loginfo(str([h, d]))
-
 
 def main():
     rospy.init_node('voronoi_hsi')
