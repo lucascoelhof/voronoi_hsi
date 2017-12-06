@@ -7,5 +7,6 @@ topic_info: {
   robot_prefix: "robot_",
   density_topic: "/voronoi/density_dist",
   tesselation_topic: "/voronoi/tesselation",
-  resize: 20
+  occ_grid_resize: 1,
+  gaussian_topic: "/voronoi/gaussian"
 }

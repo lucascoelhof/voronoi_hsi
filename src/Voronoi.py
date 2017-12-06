@@ -4,7 +4,9 @@ import numpy as np
 from Queue import PriorityQueue
 
 import rospy
+from nav_msgs.srv import GetMap
 from sensor_msgs.msg import Image
+from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import Float64MultiArray
 
 import Util
@@ -38,6 +40,11 @@ class Voronoi:
         self.set_robot_subscribers()
         self.set_output_publishers()
 
+        self.occ_grid = None
+        self.grey_img = None
+        self.img_width = 0
+        self.img_height = 0
+
         self.graph = Graph(self.topic_info["occupancy_grid_service"], self.topic_info["occupancy_grid_topic"])
 
         self.init_density_dist()
@@ -50,26 +57,43 @@ class Voronoi:
         self.density_sub = rospy.Subscriber(self.topic_info["density_topic"], Float64MultiArray, self.density_callback)
 
     def init_tesselation_image(self):
-        if self.graph is None:
-            raise ValueError("Graph is None or not initialized, can't initiate density distribuition")
+        occ_grid_service = rospy.ServiceProxy(self.topic_info["occupancy_grid_service"], GetMap)
+        self.occ_grid = occ_grid_service().map
+        self.set_image()
+
+    def set_image(self):
+        self.img_width = self.occ_grid.info.width
+        self.img_height = self.occ_grid.info.height
+        self.grey_img = np.mat(self.occ_grid_to_img(self.occ_grid.data)).reshape(self.img_width, self.img_height)
         self.clear_image()
 
+    @staticmethod
+    def occ_grid_to_img(occ_grid):
+        # type: (np.array) -> np.array
+        image = np.copy(occ_grid)
+        for i in image:
+            if 0 <= i <= 100:
+                i = 255 - i*255
+            else:
+                i = 170
+        return image
+
     def clear_image(self):
-        self.base_image = np.empty((self.graph.height, self.graph.width, 3), dtype=np.uint8)
-        self.base_image[:, :, 0] = self.graph.occ_grid
-        self.base_image[:, :, 1] = self.graph.occ_grid
-        self.base_image[:, :, 2] = self.graph.occ_grid
+        self.base_image = np.empty((self.img_width, self.img_height, 3), dtype=np.uint8)
+        self.base_image[:, :, 0] = self.grey_img
+        self.base_image[:, :, 1] = self.grey_img
+        self.base_image[:, :, 2] = self.grey_img
         self.tesselation_image = np.copy(self.base_image)
 
     def clear_density_dist(self):
-        self.density = np.full((self.graph.height, self.graph.width), 1)
+        self.density = np.full((self.graph.width, self.graph.height), 1)
 
     def density_callback(self, msg):
         # type: (Float64MultiArray) -> None
         try:
             width = msg.layout.dim[0].size
             height = msg.layout.dim[1].size
-            self.density = np.mat(msg.data).reshape(height, width)
+            self.density = np.mat(msg.data).reshape(width, height)
         except:
             rospy.logerr("Error while getting density info")
             pass
@@ -91,9 +115,6 @@ class Voronoi:
 
     def tesselation_and_control_computation(self):
         tic()
-
-        del self.priority_queue
-        self.priority_queue = PriorityQueue()
 
         for robot in self.robots.values():  # type: Robot
             node = self.graph.get_node(robot.get_pose_array())  # type: Node

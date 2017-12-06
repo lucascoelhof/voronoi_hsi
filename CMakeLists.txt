@@ -59,13 +59,13 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    GaussianArray.msg
    Gaussian.msg
+   Matrix2D.msg
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
+#add_service_files(
 #   FILES
-#   Service1.srv
-#   Service2.srv
+#   image_service.srv
 # )
 
 ## Generate actions in the 'action' folder
@@ -169,6 +169,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
    src/voronoi_h.py
+   src/image_service.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

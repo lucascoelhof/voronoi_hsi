@@ -16,24 +16,32 @@ class Graph:
         self.resolution = 0
         self.width = 0
         self.height = 0
+        self.occ_grid = None # type: np.array
         # self.occ_grid_sub = rospy.Subscriber(occ_grid_topic, OccupancyGrid, self.occ_grid_callback)
+
+        self.resize = rospy.get_param("/voronoi/topic_info/resize", 1)
 
         service_map = rospy.ServiceProxy(service_map_name, GetMap)
         occ_g = service_map()
-        self.occ_grid = np.mat(occ_g.map.data).reshape(occ_g.map.info.height, occ_g.map.info.width)
-        self.build_graph(occ_g.map.info.height, occ_g.map.info.width, occ_g.map.info.resolution)
+        self.set_occ_grid(occ_g.map)
+        self.build_graph()
 
     def occ_grid_callback(self, msg):
         # type: (OccupancyGrid) -> None
-        self.width = msg.info.width
-        self.height = msg.info.height
-        self.resolution = msg.info.resolution
-        self.occ_grid = np.mat(msg.data).reshape(self.height, self.width)  # type: OccupancyGrid
+        self.set_occ_grid(msg)
+
+    def set_occ_grid(self, map_msg):
+        # type: (OccupancyGrid) -> None
+        self.width = map_msg.info.width/self.resize
+        self.height = map_msg.info.height/self.resize
+        self.resolution = map_msg.info.resolution*self.resize
+        self.occ_grid = np.mat(map_msg.data).reshape(map_msg.info.width, map_msg.info.height)
+        self.occ_grid = self.occ_grid_resample(self.occ_grid, self.width, self.height, self.resize)
 
     def get_node(self, pose):
         """
         Gets a node based on the pose provided as an array [x,y]
-        :type pose: list
+        :type pose: ?
         """
         p = copy.deepcopy(pose)
         p_arr = []
@@ -53,16 +61,14 @@ class Graph:
         yc = math.floor(p_arr[1] / self.resolution)
         return self.nodes[xc][yc]
 
-    def build_graph(self, height, width, resolution):
+    def build_graph(self):
         """
         Builds a graph based on the occupancy grid information
         :type height: int
         :type width: int
         :type resolution: float
         """
-        self.height = height
-        self.width = width
-        self.resolution = resolution
+
         self.nodes = np.empty((self.height, self.width), dtype=object)
 
         for i in range(0, self.width):
@@ -100,7 +106,20 @@ class Graph:
         return [x, y]
 
     def clear_graph(self):
-
         for i in range(0, self.width):
             for j in range(0, self.height):
                 self.nodes[i, j].clear()
+
+    def occ_grid_resample(self, occ_grid, width, height, resampling):
+        new_grid = np.zeros((width/resampling, height/resampling), int)
+        i_new = 0
+        j_new = 0
+        for i in range(0, height, resampling):
+            j = 0
+            for j in range(0, width, resampling):
+                block = occ_grid[j:j+resampling, i:i+resampling].flatten()  # type: np.array
+                avg = np.sum(block) / block.shape[0]
+                new_grid[j_new, i_new] = avg
+                j_new += 1
+            i_new += 1
+        return new_grid
