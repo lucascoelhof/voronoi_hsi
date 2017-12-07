@@ -19,7 +19,7 @@ class Graph:
         self.occ_grid = None # type: np.array
         # self.occ_grid_sub = rospy.Subscriber(occ_grid_topic, OccupancyGrid, self.occ_grid_callback)
 
-        self.resize = rospy.get_param("/voronoi/topic_info/resize", 1)
+        self.resize = rospy.get_param("/voronoi/topic_info/occ_grid_resize", 1)
 
         service_map = rospy.ServiceProxy(service_map_name, GetMap)
         occ_g = service_map()
@@ -36,7 +36,7 @@ class Graph:
         self.height = map_msg.info.height/self.resize
         self.resolution = map_msg.info.resolution*self.resize
         self.occ_grid = np.mat(map_msg.data).reshape(map_msg.info.width, map_msg.info.height)
-        self.occ_grid = self.occ_grid_resample(self.occ_grid, self.width, self.height, self.resize)
+        # self.occ_grid = self.occ_grid_resample(self.occ_grid, self.width, self.height, self.resize)
 
     def get_node(self, pose):
         """

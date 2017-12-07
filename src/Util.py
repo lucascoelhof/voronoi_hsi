@@ -136,5 +136,5 @@ class Rate:
             if time_diff > self.time:
                 rospy.logwarn("Won't sleep, last loop took " + str(time_diff) + " s. Loop time is " + str(self.time))
             else:
-                time.sleep(time_diff)
+                time.sleep(self.time - time_diff)
         self.last_time = time.time()

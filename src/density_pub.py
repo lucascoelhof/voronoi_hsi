@@ -3,8 +3,8 @@ import numpy as np
 from threading import Thread
 
 import rospy
-from nav_msgs.srv import GetMap
-from nav_msgs.msg import OccupancyGrid
+import time
+from nav_msgs.srv import GetMap, GetMapResponse
 
 from Util import Rate
 from voronoi_hsi.msg import Gaussian
@@ -21,8 +21,11 @@ class DensityPublisher(Thread):
         return gaussian.a*math.exp(-(x_part + y_part))
 
     def publish_density(self):
-        if self.density is not None:
+        if self.density:
             self.density_pub.publish(self.density)
+            density_data = np.reshape(self.density.data, (self.height, self.width))
+            np.savetxt("density.txt", density_data, newline="\n")
+            print("Saved.")
 
     def gaussian_callback(self, msg):
         # type: (Gaussian) -> None
@@ -34,15 +37,23 @@ class DensityPublisher(Thread):
                 for j in range(0, self.height):
                     x = self.resolution * float(1/2.0 + i)
                     y = self.resolution * float(1/2.0 + j)
-                    self.density.data[i, j] = self.gaussian2d(self.gaussian, x, y)
+                    val = self.gaussian2d(self.gaussian, x, y)
+                    self.density.data[j*self.height + i] = int(math.ceil(val))
 
     def __init__(self):
         Thread.__init__(self)
 
         self.gaussian = None  # type: Gaussian
+
+        #self.gaussian = Gaussian()
+        #self.gaussian.a = 3
+        #self.gaussian.x_c = 15
+        #self.gaussian.y_c = 15
+        #self.gaussian.sigma_x = 5
+        #self.gaussian.sigma_y = 5
+
         self.density = Matrix2D()
-        self.start()
-        self.loop_rate = Rate(1)
+        self.loop_rate = Rate(0.2)
 
         rospy.init_node('density', anonymous=True)
         self.gaussian_topic = rospy.get_param("/voronoi/topic_info/gaussian_topic")
@@ -53,15 +64,19 @@ class DensityPublisher(Thread):
         self.density_pub = rospy.Publisher(self.density_topic, Matrix2D, queue_size=1)
 
         service_map = rospy.ServiceProxy(self.map_service, GetMap)
-        occ_g = service_map()  # type: OccupancyGrid
-        self.height = int(math.ceil(occ_g.info.height/float(self.resize)))
-        self.width = int(math.ceil(occ_g.info.width/float(self.resize)))
-        self.resolution = occ_g.info.resolution*self.resize
+        occ_g = service_map()  # type: GetMapResponse
+        self.height = int(math.ceil(occ_g.map.info.height/float(self.resize)))
+        self.width = int(math.ceil(occ_g.map.info.width/float(self.resize)))
+        self.resolution = occ_g.map.info.resolution*self.resize
         self.density.width = self.width
         self.density.height = self.height
-        self.density.data = np.zeros((self.width, self.height))
+        self.density.data = np.zeros((self.width*self.height, 1))
+
+        self.start()
+
 
     def run(self):
+        time.sleep(1)
         while not rospy.is_shutdown():
             self.calculate_density()
             self.publish_density()
@@ -70,6 +85,6 @@ class DensityPublisher(Thread):
 
 if __name__ == '__main__':
     try:
-        g = Gaussian()
+        g = DensityPublisher()
     except rospy.ROSInterruptException:
         pass

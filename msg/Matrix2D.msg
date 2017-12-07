@@ -1,3 +1,3 @@
-uint32 width
-uint32 height
+uint16 width
+uint16 height
 float32[] data

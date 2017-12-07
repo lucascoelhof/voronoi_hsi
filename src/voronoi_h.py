@@ -22,9 +22,10 @@ def plot_h(h, d):
     plt.draw()
     rospy.loginfo(str([h, d]))
 
+
 def main():
     rospy.init_node('voronoi_hsi')
-    rate = Util.Rate(0.5)
+    rate = Util.Rate(2)
     iterations = 0
 
     start_time = time.time()
