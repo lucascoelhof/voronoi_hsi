@@ -35,7 +35,8 @@ class Graph:
         self.width = map_msg.info.width/self.resize
         self.height = map_msg.info.height/self.resize
         self.resolution = map_msg.info.resolution*self.resize
-        self.occ_grid = np.mat(map_msg.data).reshape(map_msg.info.width, map_msg.info.height)
+        self.occ_grid = np.mat(map_msg.data).reshape(map_msg.info.height, map_msg.info.width)  # type: np.array()
+        self.occ_grid = self.occ_grid.transpose()
         # self.occ_grid = self.occ_grid_resample(self.occ_grid, self.width, self.height, self.resize)
 
     def get_node(self, pose):
@@ -69,7 +70,7 @@ class Graph:
         :type resolution: float
         """
 
-        self.nodes = np.empty((self.height, self.width), dtype=object)
+        self.nodes = np.empty((self.width, self.height), dtype=object)
 
         for i in range(self.width):
             for j in range(self.height):

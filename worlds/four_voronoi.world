@@ -1,14 +1,21 @@
-define block model
-(
-  size [0.5 0.5 0.5]
-  gui_nose 0
-)
-
 define erratic position
 (
-  #size [0.415 0.392 0.25]
-  size [0.5 0.5 0.5]
-  origin [-0.05 0 0 0]
+  size [0.3 0.3 0.5]
+  block
+  (
+	points 8
+	point[7] [0.25 0]
+	point[6] [0 0.25]
+	point[5] [0 0.75]
+	point[4] [0.25 1]
+	point[3] [0.75 1]
+	point[2] [1 0.75]
+	point[1] [1 0.25]
+	point[0] [0.75 0]
+	z [0 1]
+  )
+
+  origin [0 0 0 0]
   gui_nose 1
   drive "diff"
 )
@@ -50,7 +57,7 @@ floorplan
   name "willow"
   bitmap "../launch/map.pgm"
   size [20 20 0.5]
-  pose [ 10 10 0 0 ]
+  pose [10 10 0 0]
 )
 
 # throw in two robots

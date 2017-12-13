@@ -64,7 +64,7 @@ class Voronoi:
     def set_image(self):
         self.img_width = self.occ_grid.info.width
         self.img_height = self.occ_grid.info.height
-        self.grey_img = np.mat(self.occ_grid_to_img(self.occ_grid.data)).reshape(self.img_width, self.img_height)
+        self.grey_img = np.mat(self.occ_grid_to_img(self.occ_grid.data)).reshape(self.img_height, self.img_width).transpose()
         self.clear_image()
 
     @staticmethod
