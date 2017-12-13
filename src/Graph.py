@@ -71,8 +71,8 @@ class Graph:
 
         self.nodes = np.empty((self.height, self.width), dtype=object)
 
-        for i in range(0, self.width):
-            for j in range(0, self.height):
+        for i in range(self.width):
+            for j in range(self.height):
                 node = Node()
                 node.indexes = [i, j]
                 node.set_pose(self.get_pose(i, j))
@@ -82,8 +82,8 @@ class Graph:
                     node.valid = False
                 self.nodes[i][j] = node
 
-        for i in range(0, self.width):
-            for j in range(0, self.height):
+        for i in range(self.width):
+            for j in range(self.height):
                 if self.nodes[i, j].valid:
                     min_i = max(0, i - 1)
                     max_i = min(self.width - 1, i + 1) + 1
@@ -106,8 +106,8 @@ class Graph:
         return [x, y]
 
     def clear_graph(self):
-        for i in range(0, self.width):
-            for j in range(0, self.height):
+        for i in range(self.width):
+            for j in range(self.height):
                 self.nodes[i, j].clear()
 
     def occ_grid_resample(self, occ_grid, width, height, resampling):

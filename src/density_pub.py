@@ -33,8 +33,8 @@ class DensityPublisher(Thread):
 
     def calculate_density(self):
         if self.gaussian is not None:
-            for i in range(0, self.width):
-                for j in range(0, self.height):
+            for i in range(self.width):
+                for j in range(self.height):
                     x = self.resolution * float(1/2.0 + i)
                     y = self.resolution * float(1/2.0 + j)
                     val = self.gaussian2d(self.gaussian, x, y)
