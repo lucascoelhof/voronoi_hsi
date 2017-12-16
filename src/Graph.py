@@ -93,8 +93,13 @@ class Graph:
 
                     neighbors = self.nodes[min_i:max_i, min_j:max_j].flatten()
                     for n in neighbors:
-                        if n is not self.nodes[i, j] and n.valid:
-                            self.nodes[i, j].neighbors.append(n)
+                        if n is not self.nodes[i, j]:
+                            if n.valid:
+                                self.nodes[i, j].neighbors.append(n)
+                            else:
+                                self.nodes[i, j].obstacle_neighbors.append(n)
+                    if len(self.nodes[i, j].neighbors) > 8:
+                        print("more neighbors than it should")
 
     def get_pose(self, i, j):
         """

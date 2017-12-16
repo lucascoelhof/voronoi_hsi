@@ -10,6 +10,7 @@ class Node:
         self.neighbors = []  # neighbor nodes on graph
         self.valid = False  # true if the node has no obstacle, this information comes from occupancy grid
         self.s = None  # type: Node
+        self.obstacle_neighbors = []
 
     def clear(self):
         self.cost = float('inf')

@@ -18,13 +18,13 @@ class DensityPublisher(Thread):
         # type: (Gaussian, float, float) -> float
         x_part = math.pow(x - gaussian.x_c, 2)/(2*math.pow(gaussian.sigma_x, 2))
         y_part = math.pow(y - gaussian.y_c, 2)/(2*math.pow(gaussian.sigma_y, 2))
-        return gaussian.a*math.exp(-(x_part + y_part))
+        return gaussian.a*math.exp(-(x_part + y_part)) + 1
 
     def publish_density(self):
-        if self.density:
+        if self.density and self.gaussian is not None:
             self.density_pub.publish(self.density)
             density_data = np.reshape(self.density.data, (self.height, self.width))
-            np.savetxt("density.txt", density_data, newline="\n")
+            np.savetxt("/home/lucas/test/density.txt", density_data, newline="\n")
             print("Saved.")
 
     def gaussian_callback(self, msg):
@@ -38,29 +38,29 @@ class DensityPublisher(Thread):
                     x = self.resolution * float(1/2.0 + i)
                     y = self.resolution * float(1/2.0 + j)
                     val = self.gaussian2d(self.gaussian, x, y)
-                    self.density.data[j*self.height + i] = int(math.ceil(val))
+                    self.density.data[i*self.width + j] = val
 
     def __init__(self):
         Thread.__init__(self)
 
         self.gaussian = None  # type: Gaussian
 
-        #self.gaussian = Gaussian()
-        #self.gaussian.a = 3
-        #self.gaussian.x_c = 15
-        #self.gaussian.y_c = 15
-        #self.gaussian.sigma_x = 5
-        #self.gaussian.sigma_y = 5
+        self.gaussian = Gaussian()
+        self.gaussian.a = 10
+        self.gaussian.x_c = 5
+        self.gaussian.y_c = 5
+        self.gaussian.sigma_x = 5
+        self.gaussian.sigma_y = 5
 
         self.density = Matrix2D()
-        self.loop_rate = Rate(0.2)
+        self.loop_rate = Rate(1)
 
         rospy.init_node('density', anonymous=True)
         self.gaussian_topic = rospy.get_param("/voronoi/topic_info/gaussian_topic")
         self.density_topic = rospy.get_param("/voronoi/topic_info/density_topic")
         self.map_service = rospy.get_param("/voronoi/topic_info/occupancy_grid_service")
         self.resize = rospy.get_param("/voronoi/topic_info/occ_grid_resize")
-        self.gaussian_sub = rospy.Subscriber(self.gaussian_topic, Gaussian, self.gaussian_callback)
+        #self.gaussian_sub = rospy.Subscriber(self.gaussian_topic, Gaussian, self.gaussian_callback)
         self.density_pub = rospy.Publisher(self.density_topic, Matrix2D, queue_size=1)
 
         service_map = rospy.ServiceProxy(self.map_service, GetMap)

@@ -11,6 +11,7 @@ from RobotControl import RobotControl
 
 
 class Robot:
+    
     def __init__(self, id_r, weight, color):
         self.id = id_r
         self.weight = weight

@@ -4,5 +4,5 @@ robot_control_info: {
   kwp: 50,
   xd: 1,
   yd: 1,
-  d: 0.05
+  d: 0.01
 }

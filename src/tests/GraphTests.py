@@ -44,6 +44,9 @@ class GraphTests(unittest.TestCase):
             self.assertGreater(len(n1.neighbors), 4)
             self.assertGreater(len(n2.neighbors), 4)
             self.assertGreater(len(n3.neighbors), 4)
+            self.assertLess(len(n3.neighbors), 9)
+            self.assertLess(len(n2.neighbors), 9)
+            self.assertLess(len(n1.neighbors), 9)
 
             self.assertFalse(n3 in n1.neighbors)
             self.assertFalse(n3 in n2.neighbors)

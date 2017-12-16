@@ -6,8 +6,7 @@ from Queue import PriorityQueue
 import rospy
 from nav_msgs.srv import GetMap
 from sensor_msgs.msg import Image
-from nav_msgs.msg import OccupancyGrid
-from std_msgs.msg import Float64MultiArray
+from voronoi_hsi.msg import Matrix2D
 
 import Util
 from Node import Node
@@ -18,7 +17,6 @@ from ControlLaw import ControlLawVoronoi
 
 
 class Voronoi:
-
     def __init__(self):
         self.robots = {}
 
@@ -44,6 +42,7 @@ class Voronoi:
         self.grey_img = None
         self.img_width = 0
         self.img_height = 0
+        self.robot_color = [0, 0, 0]
 
         self.graph = Graph(self.topic_info["occupancy_grid_service"], self.topic_info["occupancy_grid_topic"])
 
@@ -54,7 +53,7 @@ class Voronoi:
         if self.graph is None:
             raise ValueError("Graph is None or not initialized, can't initiate density distribuition")
         self.clear_density_dist()
-        self.density_sub = rospy.Subscriber(self.topic_info["density_topic"], Float64MultiArray, self.density_callback)
+        self.density_sub = rospy.Subscriber(self.topic_info["density_topic"], Matrix2D, self.density_callback)
 
     def init_tesselation_image(self):
         occ_grid_service = rospy.ServiceProxy(self.topic_info["occupancy_grid_service"], GetMap)
@@ -89,10 +88,10 @@ class Voronoi:
         self.density = np.full((self.graph.width, self.graph.height), 1)
 
     def density_callback(self, msg):
-        # type: (Float64MultiArray) -> None
+        # type: (Matrix2D) -> None
         try:
-            width = msg.layout.dim[0].size
-            height = msg.layout.dim[1].size
+            width = msg.width
+            height = msg.height
             self.density = np.mat(msg.data).reshape(width, height)
         except:
             rospy.logerr("Error while getting density info")
@@ -110,7 +109,7 @@ class Voronoi:
 
     @staticmethod
     def power_dist(x, r):
-        # type: (float,float) -> float
+        # type: (float, float) -> float
         return pow(x, 2) - pow(r, 2)
 
     def tesselation_and_control_computation(self):
@@ -122,12 +121,12 @@ class Voronoi:
             node.power_dist = node.cost - pow(robot.weight, 2)
             robot.control.control_law.clear_i()
             self.priority_queue.put((node.power_dist, node, robot.id))
-            for q in node.neighbors:
-                if q is not node:
+
+            for q in node.neighbors:  # type: Node
+                if q is not node and not bool(set(q.obstacle_neighbors) & set(node.obstacle_neighbors)):
                     q.s = q
 
         h_func = 0
-
         iterations = 0
 
         while not self.priority_queue.empty():
@@ -146,7 +145,7 @@ class Voronoi:
             h_func = h_func + (pow(q.power_dist, 2) + pow(robot.weight, 2)) * self.density[q.indexes[0], q.indexes[1]] * pow(self.graph.resolution, 2)
             self.mark_node(q, robot.color)
 
-            if q is not robot_node:
+            if q.s is not None:
                 i_cl = self.density[q.indexes[0], q.indexes[1]] * q.cost * np.subtract(q.s.pose, robot_node.pose)
                 robot.control.control_law.add_control_law(i_cl)
 
@@ -165,6 +164,7 @@ class Voronoi:
             control_integral = robot.control.control_law.get_control_integral()
             rospy.logdebug("Control integral: " + str(control_integral))
             robot_node = self.graph.get_node(robot.get_pose_array())
+            self.mark_node(robot_node, self.robot_color)
             best_node = self.get_best_aligned_node(control_integral, robot_node)  # type: Node
             if best_node is None:
                 rospy.logdebug("Best node is none")
