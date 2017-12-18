@@ -19,6 +19,10 @@ def plot_h(h, d):
     np.append(time_arr, d)
     h1.set_xdata(h_func)
     h1.set_ydata(time_arr)
+    plt.figure(2)
+    plt.grid(True)
+    plt.interactive(False)
+    plt.show()
     plt.draw()
     rospy.loginfo(str([h, d]))
 

@@ -6,7 +6,7 @@ from Queue import PriorityQueue
 import rospy
 from nav_msgs.srv import GetMap
 from sensor_msgs.msg import Image
-from voronoi_hsi.msg import Matrix2D
+from voronoi_hsi.msg import Matrix2D, Gaussian
 
 import Util
 from Node import Node
@@ -14,6 +14,7 @@ from Graph import Graph
 from Robot import Robot
 from Util import tic, toc
 from ControlLaw import ControlLawVoronoi
+import matplotlib.pyplot as plt
 
 
 class Voronoi:
@@ -38,6 +39,13 @@ class Voronoi:
         self.set_robot_subscribers()
         self.set_output_publishers()
 
+        self.gaussian = Gaussian()
+        self.gaussian.a = 1
+        self.gaussian.x_c = 10
+        self.gaussian.y_c = 10
+        self.gaussian.sigma_x = 999999999999
+        self.gaussian.sigma_y = 999999999999
+
         self.occ_grid = None
         self.grey_img = None
         self.img_width = 0
@@ -52,8 +60,8 @@ class Voronoi:
     def init_density_dist(self):
         if self.graph is None:
             raise ValueError("Graph is None or not initialized, can't initiate density distribuition")
-        self.clear_density_dist()
-        self.density_sub = rospy.Subscriber(self.topic_info["density_topic"], Matrix2D, self.density_callback)
+        self.update_density_dist()
+        self.density_sub = rospy.Subscriber(self.topic_info["gaussian_topic"], Gaussian, self.density_callback)
 
     def init_tesselation_image(self):
         occ_grid_service = rospy.ServiceProxy(self.topic_info["occupancy_grid_service"], GetMap)
@@ -84,15 +92,34 @@ class Voronoi:
         self.base_image[:, :, 2] = self.grey_img
         self.tesselation_image = np.copy(self.base_image)
 
-    def clear_density_dist(self):
+    def update_density_dist(self):
         self.density = np.full((self.graph.width, self.graph.height), 1)
+        for i in range(self.graph.width):
+            for j in range(self.graph.height):
+                pose = self.graph.nodes[i][j].pose  # type: list
+                val = self.gaussian2d(self.gaussian, pose[0], pose[1])
+                self.density[i, j] = val
+        # x_axis = np.linspace(0, self.graph.width*self.graph.resolution, self.graph.width)
+        # y_axis = np.linspace(0, self.graph.height*self.graph.resolution, self.graph.height)
+
+        # plt.figure(1)
+        # plt.imshow(self.density, extent=[0, 20, 0, 20])
+        # plt.grid(True)
+        # plt.interactive(False)
+        # plt.show()
+
+    @staticmethod
+    def gaussian2d(gaussian, x, y):
+        # type: (Gaussian, float, float) -> float
+        x_part = math.pow(x - gaussian.x_c, 2) / (2 * math.pow(gaussian.sigma_x, 2))
+        y_part = math.pow(y - gaussian.y_c, 2) / (2 * math.pow(gaussian.sigma_y, 2))
+        return gaussian.a * math.exp(-(x_part + y_part)) + 1
 
     def density_callback(self, msg):
-        # type: (Matrix2D) -> None
+        # type: (Gaussian) -> None
         try:
-            width = msg.width
-            height = msg.height
-            self.density = np.mat(msg.data).reshape(width, height)
+            self.gaussian = msg
+            self.update_density_dist()
         except:
             rospy.logerr("Error while getting density info")
             pass
@@ -146,7 +173,7 @@ class Voronoi:
             self.mark_node(q, robot.color)
 
             if q.s is not None:
-                i_cl = self.density[q.indexes[0], q.indexes[1]] * q.cost * np.subtract(q.s.pose, robot_node.pose)
+                i_cl = self.density[q.indexes[0], q.indexes[1]] * q.cost * np.subtract(q.s.pose, robot.get_pose_array())
                 robot.control.control_law.add_control_law(i_cl)
 
             for n in q.neighbors:
@@ -160,17 +187,17 @@ class Voronoi:
                     self.priority_queue.put((n.power_dist, n, robot.id))
 
         for robot in self.robots.values():  # type: Robot
-            rospy.logdebug("\n\nRobot " + str(robot.id))
+            print("\n\nRobot " + str(robot.id))
             control_integral = robot.control.control_law.get_control_integral()
-            rospy.logdebug("Control integral: " + str(control_integral))
+            print("Control integral: " + str(control_integral))
             robot_node = self.graph.get_node(robot.get_pose_array())
-            self.mark_node(robot_node, self.robot_color)
+            # self.mark_node(robot_node, self.robot_color)
             best_node = self.get_best_aligned_node(control_integral, robot_node)  # type: Node
             if best_node is None:
-                rospy.logdebug("Best node is none")
+                print("Best node is none")
                 continue
             else:
-                rospy.logdebug("Goal: " + str(best_node.pose))
+                print("Goal: " + str(best_node.pose))
                 robot.control.set_goal(best_node.pose)
 
         self.publish_tesselation_image()

@@ -38,7 +38,7 @@ class DensityPublisher(Thread):
                     x = self.resolution * float(1/2.0 + i)
                     y = self.resolution * float(1/2.0 + j)
                     val = self.gaussian2d(self.gaussian, x, y)
-                    self.density.data[i*self.width + j] = val
+                    self.density.data[j*self.width + i] = val
 
     def __init__(self):
         Thread.__init__(self)
@@ -49,8 +49,8 @@ class DensityPublisher(Thread):
         self.gaussian.a = 10
         self.gaussian.x_c = 5
         self.gaussian.y_c = 5
-        self.gaussian.sigma_x = 5
-        self.gaussian.sigma_y = 5
+        self.gaussian.sigma_x = 1
+        self.gaussian.sigma_y = 1
 
         self.density = Matrix2D()
         self.loop_rate = Rate(1)
@@ -73,7 +73,6 @@ class DensityPublisher(Thread):
         self.density.data = np.zeros((self.width*self.height, 1))
 
         self.start()
-
 
     def run(self):
         time.sleep(1)
