@@ -1,0 +1,10 @@
+<launch>
+    <group ns = "voronoi">
+        <group ns = "dir_info">
+            <param name="images_dir" type="str" value="$(find voronoi_hsi)/images"/>
+        </group>
+        <rosparam file="$(find voronoi_hsi)/launch/topic_info.yaml" command="load" />
+        <rosparam file="$(find voronoi_hsi)/launch/eight_robots.yaml" command="load" />
+        <rosparam file="$(find voronoi_hsi)/launch/robot_control_info.yaml" command="load" />
+    </group>
+</launch>

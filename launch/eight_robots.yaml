@@ -1,0 +1,10 @@
+robots: [
+{id: 0, color: [174, 38, 38], weight: 1},
+{id: 1, color: [255, 233, 0], weight: 1},
+{id: 2, color: [70, 130, 180], weight: 1},
+{id: 3, color: [84, 255, 159], weight: 1},
+{id: 4, color: [139, 69, 19], weight: 1},
+{id: 5, color: [125, 38, 205], weight: 1},
+{id: 6, color: [255, 165, 0], weight: 1},
+{id: 7, color: [255, 105, 180], weight: 1},
+]
