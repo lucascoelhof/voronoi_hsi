@@ -187,9 +187,9 @@ class Voronoi:
                     self.priority_queue.put((n.power_dist, n, robot.id))
 
         for robot in self.robots.values():  # type: Robot
-            print("\n\nRobot " + str(robot.id))
+            #print("\n\nRobot " + str(robot.id))
             control_integral = robot.control.control_law.get_control_integral()
-            print("Control integral: " + str(control_integral))
+            #print("Control integral: " + str(control_integral))
             robot_node = self.graph.get_node(robot.get_pose_array())
             # self.mark_node(robot_node, self.robot_color)
             best_node = self.get_best_aligned_node(control_integral, robot_node)  # type: Node
@@ -209,7 +209,9 @@ class Voronoi:
         # type: (list, Node) -> Node
         max_dpi = 0
         best_node = None
-        for n in robot_node.neighbors:
+        for n in robot_node.neighbors:  # type: Node
+            if n != n.s:
+                continue
             dpi = np.dot(i_func, (np.subtract(n.pose, robot_node.pose)))
             if dpi > max_dpi:
                 max_dpi = dpi
@@ -255,6 +257,7 @@ class Voronoi:
             if robots is not None and len(robots) > 0:
                 for r in robots:
                     robot = Robot(r["id"], r["weight"], r["color"])
+                    print("robot" + str(robot.id) + " w:" + str(robot.weight))
                     self.robots[robot.id] = robot
         except KeyError:
             rospy.logfatal("Parameter robots not found. Exiting.")
