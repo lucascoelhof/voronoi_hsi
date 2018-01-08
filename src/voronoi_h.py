@@ -15,15 +15,16 @@ time_arr = []
 h1, = plt.plot([], [])
 
 def main():
+    loop_time = 2.0
     rospy.init_node('voronoi_hsi')
-    rate = Util.Rate(0.5)
+    rate = Util.Rate(1/loop_time)
     iterations = 0
 
     start_time = time.time()
 
     h_publisher = rospy.Publisher("/voronoi/h_func", Float64, queue_size=1)
 
-    voronoi = Voronoi()
+    voronoi = Voronoi(loop_time)
 
     time.sleep(2)
 

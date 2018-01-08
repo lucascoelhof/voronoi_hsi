@@ -58,8 +58,8 @@ class Graph:
         else:
             raise ValueError("Unrecognized type " + str(type(pose)) + " for conversion from node to pose")
 
-        xc = math.floor(p_arr[0] / self.resolution)
-        yc = math.floor(p_arr[1] / self.resolution)
+        xc = int(math.floor(p_arr[0] / self.resolution))
+        yc = int(math.floor(p_arr[1] / self.resolution))
         return self.nodes[xc][yc]
 
     def build_graph(self):
