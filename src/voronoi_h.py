@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import rospy
+from std_msgs.msg import Float64
 
 import Util
 from Voronoi import Voronoi
@@ -13,26 +14,14 @@ h_func = []
 time_arr = []
 h1, = plt.plot([], [])
 
-
-def plot_h(h, d):
-    np.append(h_func, h)
-    np.append(time_arr, d)
-    h1.set_xdata(h_func)
-    h1.set_ydata(time_arr)
-    plt.figure(2)
-    plt.grid(True)
-    plt.interactive(False)
-    plt.show()
-    plt.draw()
-    rospy.loginfo(str([h, d]))
-
-
 def main():
     rospy.init_node('voronoi_hsi')
     rate = Util.Rate(0.5)
     iterations = 0
 
     start_time = time.time()
+
+    h_publisher = rospy.Publisher("/voronoi/h_func", Float64, queue_size=1)
 
     voronoi = Voronoi()
 
@@ -45,8 +34,8 @@ def main():
     while not rospy.is_shutdown():
         h = voronoi.tesselation_and_control_computation()
         d = time.time() - start_time
+        h_publisher.publish(h)
         iterations += 1
-        # plot_h(h, d)
         rate.sleep()
 
 
