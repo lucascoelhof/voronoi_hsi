@@ -1,0 +1,4 @@
+geometry_msgs/Pose pose
+string id
+uint8[] color
+---

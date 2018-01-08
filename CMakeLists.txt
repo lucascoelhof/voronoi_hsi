@@ -63,10 +63,13 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## Generate services in the 'srv' folder
-#add_service_files(
-#   FILES
-#   image_service.srv
-# )
+add_service_files(
+   FILES
+   SetRobotPose.srv
+   SetSurfPlot.srv
+   SetColorPlot.srv
+   SetOccGrid.srv
+ )
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -79,6 +82,8 @@ find_package(catkin REQUIRED COMPONENTS
  generate_messages(
    DEPENDENCIES
    std_msgs
+   geometry_msgs
+   nav_msgs
 )
 
 ################################################

@@ -11,6 +11,10 @@ from tf import transformations as tf_trans
 from cv_bridge import CvBridge, CvBridgeError
 
 
+def subtract_pose(pose1, pose2):
+    return Pose([pose1.x - pose2.x, pose1.y - pose2.y, pose1.z - pose2.z])
+
+
 def static_vars(**kwargs):
     """
     Neat way to declare static variables in functions
@@ -71,6 +75,13 @@ def quaternion_get_yaw(quat):
     # type: (Quaternion) -> float
     euler_arr = quaternion_get_euler(quat)
     return euler_arr[2]
+
+
+def get_quaternion_fom_euler(euler):
+    # type: (list) -> Quaternion
+    if len(euler) is not 3:
+        raise ValueError("euler angles should be a 3 position vector")
+    return tf_trans.quaternion_from_euler(euler[0], euler[1], euler[2])
 
 
 def publish_tf_transformation(msg, frame, base_frame):
