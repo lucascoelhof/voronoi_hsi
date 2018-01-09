@@ -63,6 +63,16 @@ def array_to_quaternion(arr):
     return quat
 
 
+def rgb_array_to_hex_str(rgb):
+    # type: (list) -> str
+    if not isinstance(rgb, list) and len(rgb) != 3:
+        return ""
+    r_str = "#"
+    for color in rgb:
+        r_str += str(hex(color)).replace("0x", "")
+    return r_str
+
+
 def quaternion_get_euler(quat):
     # type: (Quaternion) -> list
     euler_arr = np.empty(3, np.float64)
