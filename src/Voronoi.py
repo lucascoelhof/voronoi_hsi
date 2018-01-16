@@ -18,12 +18,15 @@ import matplotlib.pyplot as plt
 
 
 class Voronoi:
-    def __init__(self):
+    def __init__(self, loop_time):
         self.robots = {}
+
+        self.loop_time = loop_time
 
         self.dir_info = {}
         self.topic_info = {}
         self.robot_control_info = {}
+        self.adapting_weight_constant = 1
 
         self.density = None
         self.density_sub = None  # type: rospy.Publisher
@@ -47,11 +50,12 @@ class Voronoi:
         self.gaussian.sigma_x = 999999999999
         self.gaussian.sigma_y = 999999999999
 
+
         self.occ_grid = None
         self.grey_img = None
         self.img_width = 0
         self.img_height = 0
-        self.robot_color = [0, 0, 0]
+        self.robot_color = [50, 50, 50]
 
         self.graph = Graph(self.topic_info["occupancy_grid_service"], self.topic_info["occupancy_grid_topic"])
 
@@ -94,7 +98,7 @@ class Voronoi:
         self.tesselation_image = np.copy(self.base_image)
 
     def update_density_dist(self):
-        self.density = np.full((self.graph.width, self.graph.height), 1)
+        self.density = np.ones((self.graph.width, self.graph.height))
         for i in range(self.graph.width):
             for j in range(self.graph.height):
                 pose = self.graph.nodes[i][j].pose  # type: list
@@ -182,16 +186,16 @@ class Voronoi:
             robot_node = self.graph.get_node(robot.get_pose_array())  # type: Node
 
             h_func = h_func + (pow(q.power_dist, 2) + pow(robot.weight, 2)) * self.density[q.indexes[0], q.indexes[1]] * pow(self.graph.resolution, 2)
-            self.mark_node(q, robot.color)
+            self.mark_node(q, robot)
 
             if q.s is not None:
-                i_cl = self.density[q.indexes[0], q.indexes[1]] * q.cost * np.subtract(q.s.pose, robot.get_pose_array())
+                i_cl = self.get_density(q) * q.cost * np.subtract(q.s.pose, robot.get_pose_array())
                 robot.control.control_law.add_control_law(i_cl)
 
             for n in q.neighbors:
                 _cost = q.cost + np.linalg.norm(np.subtract(q.pose, n.pose))
                 _power_dist = self.power_dist(_cost, robot.weight)
-                if _power_dist < n.power_dist and n.robot_id == -1:
+                if _power_dist < n.power_dist:
                     n.cost = _cost
                     n.power_dist = _power_dist
                     if not n.is_neighbor(robot_node):
@@ -206,17 +210,46 @@ class Voronoi:
             # self.mark_node(robot_node, self.robot_color)
             best_node = self.get_best_aligned_node(control_integral, robot_node)  # type: Node
             if best_node is None:
-                print("Best node is none")
+                print("Best node is none robot_" + str(robot.id))
                 continue
             else:
                 print("Goal: " + str(best_node.pose))
                 robot.control.set_goal(best_node.pose)
 
+
         self.publish_tesselation_image()
         self.publish_voronoi()
+        self.adapt_weights()
         self.clear()
         rospy.loginfo("Tesselation finished with iter=" + str(iterations) + " and " + str(toc()) + "s")
         return h_func
+
+    def adapt_weights(self):
+        w_del_robots = []
+        for robot in self.robots.values():  # type: Robot
+            Kp = robot.control.get_kp()
+            Kdel = robot.get_kdel()
+            diff_sum = 0
+            for robot_neigh in self.robots.values():  # type: Robot
+                kdel_neigh = robot_neigh.get_kdel()
+                kp_neigh = robot_neigh.control.get_kp()
+                if robot is robot_neigh:
+                    continue
+                diff_sum += (robot.weight - self.k_func(Kp, Kdel)) - (robot_neigh.weight - self.k_func(kp_neigh, kdel_neigh))
+            w_del = - self.adapting_weight_constant / robot.mass * diff_sum * self.loop_time
+            w_del_robots.append(w_del)
+
+        for robot, w_dot in zip(self.robots.values(), w_del_robots):
+            robot.weight += w_dot
+            robot.weight_publisher.publish(robot.weight)
+
+
+    def k_func(self, kp, kdel):
+        return np.linalg.norm(kp + kdel)/np.linalg.norm(kp)
+
+    def get_density(self, node):
+        # type: (Node) -> double
+        return self.density[node.indexes[0], node.indexes[1]]
 
     def get_best_aligned_node(self, i_func, robot_node):
         # type: (list, Node) -> Node
@@ -234,11 +267,14 @@ class Voronoi:
     def clear(self):
         self.graph.clear_graph()
         self.tesselation_image = np.copy(self.base_image)
+        for robot in self.robots.values():  # type: Robot
+            robot.clear()
 
-    def mark_node(self, node, color):
-        # type: (Node, list) -> None
+    def mark_node(self, node, robot):
+        # type: (Node, Robot) -> None
         coord = node.indexes
-        self.tesselation_image[coord[0], coord[1]] = color
+        self.tesselation_image[coord[0], coord[1]] = robot.color
+        robot.mass += self.get_density(node)
 
     def publish_tesselation_image(self):
         if self.tesselation_image_pub is None:
@@ -302,6 +338,7 @@ class Voronoi:
     def get_robot_control_info_param(self):
         try:
             self.robot_control_info = rospy.get_param("/voronoi/robot_control_info")
+            self.adapting_weight_constant = self.robot_control_info["kd"]
             for robot in self.robots.values():
 
                 control_law = ControlLawVoronoi(self.robot_control_info["d"], self.robot_control_info["kv"],

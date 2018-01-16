@@ -62,21 +62,6 @@ class ControlLawVoronoi(ControlLawDiff):
         return v, w
 
 
-class ControlLawAlyssa(ControlLawVoronoi):
-
-    def __init__(self, d=0.05, kv=1, kw=5, xd=1, yd=1):
-        # type: (float, float, float, float, float) -> ControlLawAlyssa
-        super(ControlLawAlyssa, self).__init__(d, kv, kw)
-        self.xd = xd
-        self.yd = yd
-        self.dev_mat = [[xd, yd], [yd, xd]]
-
-    def get_speed(self, pose_robot, pose_goal):
-        # type: (list, list) -> tuple
-        error = np.subtract(pose_goal, pose_robot) * self.dev_mat
-        return self.holo_to_diff(error[0], error[1], Util.pose_array_get_yaw(pose_robot))
-
-
 class ControlLawEnergy(ControlLawVoronoi):
 
     def __init__(self, d=0.05, kv=1, kw=5, td=0.1, e_tot=100, e_k=1):

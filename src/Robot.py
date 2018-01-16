@@ -1,6 +1,8 @@
 import json
+import numpy as np
 
 import rospy
+from std_msgs.msg import Float64
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
@@ -12,7 +14,7 @@ from RobotControl import RobotControl
 
 class Robot:
     
-    def __init__(self, id_r, weight, color):
+    def __init__(self, id_r, weight, color, xd=0, yd=0):
         self.id = id_r
         self.weight = weight
         self.color = color
@@ -21,6 +23,11 @@ class Robot:
         self.speed_pub = None
         self.pose_sub = None
         self.pose = Pose()
+        self.mass = 0
+        self.xd = xd
+        self.yd = yd
+
+        self.weight_publisher = rospy.Publisher("/voronoi/robot_" + str(self.id) + "/weight", Float64, queue_size=1)
 
         self.control = RobotControl()
 
@@ -81,4 +88,10 @@ class Robot:
         # type: (list) -> None
         self.pose.position.x = arr[0]
         self.pose.position.y = arr[1]
+
+    def clear(self):
+        self.mass = 0
+
+    def get_kdel(self):
+        return np.matrix([[self.xd, self.yd], [self.xd, self.yd]])
 

@@ -1,3 +1,4 @@
+import numpy as np
 from threading import Thread
 
 import rospy
@@ -19,7 +20,7 @@ class RobotControl(Thread):
         self.speed_pub = None
 
         self.goal = []
-        self.control_law = None
+        self.control_law = None  # type: ControlLawDiff
 
     def update_pose(self):
         self.pose = self.pose_updater()
@@ -54,5 +55,7 @@ class RobotControl(Thread):
                 self.speed_pub.publish(speed_msg)
                 rate.sleep()
 
+    def get_kp(self):
+        return np.matrix([[self.control_law.kv, 0], [0, self.control_law.kv]])
 
 
