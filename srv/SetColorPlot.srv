@@ -1,4 +1,7 @@
-float32[] x_data
-float32[] y_data
-uint8[] values
+sensor_msgs/Image image
+float32 x_start
+float32 x_end
+float32 y_start
+float32 y_end
+string id
 ---

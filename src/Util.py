@@ -69,7 +69,7 @@ def rgb_array_to_hex_str(rgb):
         return ""
     r_str = "#"
     for color in rgb:
-        r_str += str(hex(color)).replace("0x", "")
+        r_str += str(hex(color)).replace("0x", "").zfill(2)
     return r_str
 
 

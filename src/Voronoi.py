@@ -6,7 +6,7 @@ from Queue import PriorityQueue
 import rospy
 from nav_msgs.srv import GetMap
 from sensor_msgs.msg import Image
-from voronoi_hsi.msg import Matrix2D, Gaussian
+from voronoi_hsi.msg import *
 
 import Util
 from Node import Node
@@ -31,6 +31,7 @@ class Voronoi:
         self.base_image = None
         self.tesselation_image = None
         self.tesselation_image_pub = None  # type: rospy.Publisher
+        self.voronoi_publisher = rospy.Publisher("/voronoi/voronoi_tesselation", VoronoiTesselation, queue_size=1)
 
         self.priority_queue = PriorityQueue()
 
@@ -139,11 +140,22 @@ class Voronoi:
         # type: (float, float) -> float
         return pow(x, 2) - pow(r, 2)
 
+    def publish_voronoi(self):
+        voro_tess = VoronoiTesselation()
+        voro_tess.width = self.graph.width
+        voro_tess.height = self.graph.height
+        voro_tess.data = np.empty((voro_tess.width*voro_tess.height), dtype=int)
+        for i in range(0, self.graph.width):
+            for j in range(0, self.graph.height):
+                voro_tess.data[i*voro_tess.width + j] = self.graph.nodes[i, j].robot_id
+        self.voronoi_publisher.publish(voro_tess)
+
     def tesselation_and_control_computation(self):
         tic()
 
         for robot in self.robots.values():  # type: Robot
-            node = self.graph.get_node(robot.get_pose_array())  # type: Node
+            pose = robot.get_pose_array()
+            node = self.graph.get_node(pose)  # type: Node
             node.cost = 0  # np.linalg.norm(np.subtract(node.pose, robot.get_pose_array()))
             node.power_dist = node.cost - pow(robot.weight, 2)
             robot.control.control_law.clear_i()
@@ -187,9 +199,9 @@ class Voronoi:
                     self.priority_queue.put((n.power_dist, n, robot.id))
 
         for robot in self.robots.values():  # type: Robot
-            #print("\n\nRobot " + str(robot.id))
+            # print("\n\nRobot " + str(robot.id))
             control_integral = robot.control.control_law.get_control_integral()
-            #print("Control integral: " + str(control_integral))
+            # print("Control integral: " + str(control_integral))
             robot_node = self.graph.get_node(robot.get_pose_array())
             # self.mark_node(robot_node, self.robot_color)
             best_node = self.get_best_aligned_node(control_integral, robot_node)  # type: Node
@@ -201,6 +213,7 @@ class Voronoi:
                 robot.control.set_goal(best_node.pose)
 
         self.publish_tesselation_image()
+        self.publish_voronoi()
         self.clear()
         rospy.loginfo("Tesselation finished with iter=" + str(iterations) + " and " + str(toc()) + "s")
         return h_func
@@ -303,5 +316,3 @@ class Voronoi:
 
     def image_builder(self):
         raise NotImplementedError("image_builder not implemented yet")
-
-

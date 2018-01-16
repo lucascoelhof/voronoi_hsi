@@ -3,6 +3,7 @@ from matplotlib.patches import Circle, Ellipse
 
 import Util
 
+
 class DraggablePoint(object):
 
     # http://stackoverflow.com/questions/21654008/matplotlib-drag-overlapping-points-interactively
@@ -15,7 +16,7 @@ class DraggablePoint(object):
             color = [20, 20, 20]
         self.parent = parent
         print(color)
-        self.point = Circle((x, y), size, color=Util.rgb_array_to_hex_str(color))
+        self.point = Circle((x, y), size, color=Util.rgb_array_to_hex_str(color), zorder=99)
         self.x = x
         self.y = y
         self.parent.axes[0].add_patch(self.point)
@@ -88,3 +89,7 @@ class DraggablePoint(object):
         self.point.figure.canvas.mpl_disconnect(self.cidpress)
         self.point.figure.canvas.mpl_disconnect(self.cidrelease)
         self.point.figure.canvas.mpl_disconnect(self.cidmotion)
+
+    def remove(self):
+        self.point.remove()
+        self.disconnect()

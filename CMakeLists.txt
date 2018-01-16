@@ -60,15 +60,17 @@ find_package(catkin REQUIRED COMPONENTS
    GaussianArray.msg
    Gaussian.msg
    Matrix2D.msg
+   VoronoiTesselation.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
    FILES
    SetRobotPose.srv
-   SetSurfPlot.srv
    SetColorPlot.srv
    SetOccGrid.srv
+   RemoveColorPlot.srv
+   RemoveRobot.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -84,6 +86,7 @@ add_service_files(
    std_msgs
    geometry_msgs
    nav_msgs
+   sensor_msgs
 )
 
 ################################################
