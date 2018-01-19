@@ -14,7 +14,7 @@ time_arr = []
 h1, = plt.plot([], [])
 
 def main():
-    loop_time = 2.0
+    loop_time = 5.0
     rospy.init_node('voronoi_hsi')
     rate = Util.Rate(1/loop_time)
     iterations = 0

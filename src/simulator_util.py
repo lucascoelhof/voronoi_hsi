@@ -1,5 +1,5 @@
-import matplotlib.pyplot as plt
-from matplotlib.patches import Circle, Ellipse
+import numpy as np
+from matplotlib.patches import Circle
 
 import Util
 
@@ -12,10 +12,9 @@ class DraggablePoint(object):
 
     def __init__(self, parent, x=0.1, y=0.1, size=0.2, color=None):
 
-        if color is None:
-            color = [20, 20, 20]
+        color_edge = [20, 20, 20]
         self.parent = parent
-        self.point = Circle((x, y), size, color=Util.rgb_array_to_hex_str(color), zorder=99)
+        self.point = Circle((x, y), size, facecolor=Util.rgb_array_to_hex_str(color), edgecolor=Util.rgb_array_to_hex_str(color_edge), zorder=99)
         self.x = x
         self.y = y
         self.parent.axes[0].add_patch(self.point)

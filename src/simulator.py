@@ -126,8 +126,7 @@ class OccGrid(object):
 
     def draw_rectangles(self, fig):
         ax = fig.axes[0]
-        if self.patches is not None:
-            self.patches.remove()
+
         patchs = []
         origin = np.array(Util.pose2d_to_array(self.origin))
         resolution = self.resolution
@@ -142,18 +141,21 @@ class OccGrid(object):
                     color = (int(1 - elem/100.0), int(1 - elem/100.0), int(1 - elem/100.0))
                 pose = tuple(origin + np.array(index) * resolution)
                 patchs.append(patches.Rectangle(pose, resolution, resolution, color=color))
-        pc = PatchCollection(patchs)
+        pc = PatchCollection(patchs, match_original=True)
+        if self.patches is not None:
+            self.patches.remove()
         ax.add_collection(pc)
         self.should_update = False
         self.axes = ax
         self.patches = pc
         return ax
 
+
 class Simulator(object):
     physics_time = 0.1
 
     def __init__(self):
-        self.robots = {}  # type: dict[RobotSimulator]
+        self.robots = {}  # type: dict
         self.physics_time = 0.1
         rospy.init_node('simulator')
         self.vis_time = 0.2
@@ -168,11 +170,13 @@ class Simulator(object):
 
         self.voronoi_collection = None
         self.voronoi_axes = None
+        self.voronoi_should_draw = False
 
         self.obstacle_collection = None
         self.obstacle_axes = None
 
         self.fig = plt.figure(1)
+        plt.gca().set_aspect('equal', adjustable='box')
         plt.axis([0, 20, 0, 20])
         self.occ_grid.get_occ_grid()
 
@@ -194,7 +198,7 @@ class Simulator(object):
             self.occ_grid_topic = sim_params["occupancy_grid_topic"]
             self.occ_grid_subscriber = rospy.Subscriber(self.occ_grid_topic, OccupancyGrid, self.occ_grid.set_occ_grid, queue_size=1)
             self.tesselation_topic = sim_params["tesselation_topic"]
-            self.tesselation_subscriber = rospy.Subscriber(self.tesselation_topic, VoronoiTesselation, queue_size=1)
+            self.tesselation_subscriber = rospy.Subscriber(self.tesselation_topic, VoronoiTesselation, self.voronoi_callback, queue_size=1)
             self.robot_param = sim_params["robots_param"]
         except KeyError:
             rospy.logfatal("Parameter robots not found. Exiting.")
@@ -222,21 +226,22 @@ class Simulator(object):
         width = msg.width
         matrix = np.reshape(msg.data, (width, height))
 
-        if self.voronoi_axes is not None:
-            self.voronoi_collection.remove()
-            self.fig.delaxes(self.voronoi_axes)
-
-        self.voronoi_axes = self.fig.add_subplot(111, aspect='equal')
+        self.voronoi_axes = self.fig.axes[0]
         patchs = []
         origin = np.array(Util.pose2d_to_array(self.occ_grid.origin))
         resolution = self.occ_grid.resolution
         for index, elem in np.ndenumerate(matrix):
-            if elem != 0:
+            if elem != -1:
                 pose = tuple(origin + np.array(index) * resolution)
-                patchs.append(patches.Rectangle(pose, resolution, resolution, self.robots[str(elem)].color))
-        self.voronoi_collection = PatchCollection(patchs)
-        self.voronoi_axes.add_collection(self.voronoi_collection)
-
+                color = self.robots[elem].color
+                color_t = (color[0]/255.0, color[1]/255.0, color[2]/255.0)
+                patchs.append(patches.Rectangle(pose, resolution, resolution, color=color_t))
+        voronoi_collection_new = PatchCollection(patchs, match_original=True)
+        if self.voronoi_axes is not None and self.voronoi_collection is not None:
+            self.voronoi_collection.remove()
+        self.voronoi_axes.add_collection(voronoi_collection_new)
+        self.voronoi_collection = voronoi_collection_new
+        self.voronoi_should_draw = True
 
     @staticmethod
     def conf_to_pose(pose_conf):
@@ -294,7 +299,10 @@ class Simulator(object):
         # for robot in self.robots.itervalues():
         if self.occ_grid.should_update:
             self.occ_grid.draw_rectangles(self.fig)
-
+            self.fig.canvas.draw()
+        if self.voronoi_should_draw:
+            self.voronoi_should_draw = False
+            self.fig.canvas.draw()
         threading.Timer(self.vis_time, self.visual_thread).start()
 
 
