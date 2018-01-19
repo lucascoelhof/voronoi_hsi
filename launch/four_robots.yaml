@@ -1,6 +1,6 @@
 robots: [
-{id: 0, color: [174, 38, 38], weight: 1, xd: 0, yd: 0},
-{id: 1, color: [255, 233, 0], weight: 1, xd: 0, yd: 0},
-{id: 2, color: [70, 130, 180], weight: 1, xd: 0, yd: 0},
-{id: 3, color: [84, 255, 159], weight: 1, xd: 0, yd: 0}
+{id: 0, color: [174, 38, 38], weight: 1, xd: 0, yd: 0, pose:[10, 10, 0]},
+{id: 1, color: [255, 233, 0], weight: 1, xd: 0, yd: 0, pose:[4, 10, 0]},
+{id: 2, color: [70, 130, 180], weight: 1, xd: 0, yd: 0, pose:[6, 4, 0]},
+{id: 3, color: [84, 255, 159], weight: 1, xd: 0, yd: 0, pose:[5, 8, 0]}
 ]

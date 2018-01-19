@@ -12,7 +12,11 @@ from cv_bridge import CvBridge, CvBridgeError
 
 
 def subtract_pose(pose1, pose2):
-    return Pose([pose1.x - pose2.x, pose1.y - pose2.y, pose1.z - pose2.z])
+    pose = Pose()
+    pose.position.x = pose1.position.x - pose2.position.x
+    pose.position.y = pose1.position.y - pose2.position.y
+    pose.position.z = pose1.position.z - pose2.position.z
+    return pose
 
 
 def static_vars(**kwargs):
@@ -91,7 +95,13 @@ def get_quaternion_fom_euler(euler):
     # type: (list) -> Quaternion
     if len(euler) is not 3:
         raise ValueError("euler angles should be a 3 position vector")
-    return tf_trans.quaternion_from_euler(euler[0], euler[1], euler[2])
+    quat_array = tf_trans.quaternion_from_euler(euler[0], euler[1], euler[2])
+    quat = Quaternion()
+    quat.x = quat_array[0]
+    quat.y = quat_array[1]
+    quat.z = quat_array[2]
+    quat.w = quat_array[3]
+    return quat
 
 
 def publish_tf_transformation(msg, frame, base_frame):

@@ -10,12 +10,11 @@ class DraggablePoint(object):
 
     lock = None
 
-    def __init__(self, parent, x=0.1, y=0.1, size=0.5, color=None):
+    def __init__(self, parent, x=0.1, y=0.1, size=0.2, color=None):
 
         if color is None:
             color = [20, 20, 20]
         self.parent = parent
-        print(color)
         self.point = Circle((x, y), size, color=Util.rgb_array_to_hex_str(color), zorder=99)
         self.x = x
         self.y = y
@@ -57,19 +56,10 @@ class DraggablePoint(object):
 
     def set_point_pose(self, x, y):
         self.point.center = (x, y)
+        self.refresh()
 
-        self.point.set_animated(True)
-        canvas = self.point.figure.canvas
-        canvas.draw()
-        self.background = canvas.copy_from_bbox(self.point.axes.bbox)
-        axes = self.point.axes
-        canvas.restore_region(self.background)
-        axes.draw_artist(self.point)
-        self.x = self.point.center[0]
-        self.y = self.point.center[1]
-        canvas.blit(axes.bbox)
-        self.point.set_animated(False)
-        self.background = None
+        self.pose.position.x = self.x
+        self.pose.position.y = self.y
 
     def on_release(self, event):
         if DraggablePoint.lock is not self:
@@ -84,6 +74,20 @@ class DraggablePoint(object):
 
         self.x = self.point.center[0]
         self.y = self.point.center[1]
+
+    def refresh(self):
+        self.point.set_animated(True)
+        canvas = self.point.figure.canvas
+        canvas.draw()
+        self.background = canvas.copy_from_bbox(self.point.axes.bbox)
+        axes = self.point.axes
+        canvas.restore_region(self.background)
+        axes.draw_artist(self.point)
+        canvas.blit(axes.bbox)
+        self.x = self.point.center[0]
+        self.y = self.point.center[1]
+        self.point.set_animated(False)
+        self.background = None
 
     def disconnect(self):
         self.point.figure.canvas.mpl_disconnect(self.cidpress)

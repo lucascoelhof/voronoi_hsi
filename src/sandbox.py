@@ -22,7 +22,7 @@ def remove_image(img):
     img.figure.canvas.draw()
 
 
-def draw_rectangles(fig, obstacles, origin, resolution):
+def draw_rectangles(fig, obstacles, origin, resolution, colors):
     ax = fig.add_subplot(111, aspect='equal')
     patchs = []
     for index, elem in np.ndenumerate(obstacles):
@@ -88,7 +88,6 @@ sim = simulator.Simulator()
 rand_matrix = np.round(np.random.rand(80, 80))
 Util.tic()
 ax = draw_rectangles(fig, rand_matrix, [0, 0], 0.25)
-plt.axis([0, 30, 0, 30])
 print Util.toc()
 threading.Timer(5, create_robot, [sim, [5, 6]]).start()
 show()

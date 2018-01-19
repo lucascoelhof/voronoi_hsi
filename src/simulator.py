@@ -1,22 +1,23 @@
-import sys
 import math
-import numpy as np
 import threading
+
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-
-
+import numpy as np
 import rospy
 from geometry_msgs.msg import Pose, Twist
+from matplotlib import patches
+from matplotlib.collections import PatchCollection
 from nav_msgs.msg import Odometry, OccupancyGrid
 from nav_msgs.srv import GetMap
+from voronoi_hsi.msg import VoronoiTesselation
 from voronoi_hsi.srv import *
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
-
 
 import Util
 import simulator_util
+
+
+def almost_equal(n, m, diff=0.005):
+    return abs(n-m) <= diff
 
 
 class RobotSimulator(simulator_util.DraggablePoint):
@@ -26,9 +27,9 @@ class RobotSimulator(simulator_util.DraggablePoint):
 
         super(RobotSimulator, self).__init__(fig_handler, x=pose.position.x, y=pose.position.y, color=color)
         self.fig_handler = fig_handler
-        self.pose = Pose()
+        self.pose = pose
         self.speed = Twist()
-        self.color = []
+        self.color = color
         self.id = id_robot
         self.speed_callback = rospy.Subscriber("robot_" + str(self.id) + "/cmd_vel", Twist, queue_size=1)
         self.pose_publisher = rospy.Publisher("robot_" + str(self.id) + "/pose", Odometry, queue_size=10)
@@ -54,6 +55,24 @@ class RobotSimulator(simulator_util.DraggablePoint):
         self.speed_callback.unregister()
         self.pose_publisher.unregister()
 
+    def update_pose_diff(self, occ_grid):
+        # type: (OccGrid) -> None
+        self.lock
+        w = Util.quaternion_get_yaw(self.pose.orientation)
+
+        w_dot = self.speed.angular.z * Simulator.physics_time
+        x_dot = self.speed.linear.x * math.cos(Util.quaternion_get_yaw(self.pose.orientation))
+        y_dot = self.speed.linear.x * math.sin(Util.quaternion_get_yaw(self.pose.orientation))
+        new_pose = Pose()
+
+        w = w + w_dot
+        new_pose.position.x = self.pose.position.x + x_dot
+        new_pose.position.y = self.pose.position.y + y_dot
+        new_pose.orientation = Util.get_quaternion_fom_euler([0, 0, w])
+        if occ_grid.is_free(new_pose) and (not almost_equal(x_dot, 0) or not almost_equal(y_dot, 0)):
+            self.set_point_pose(new_pose.position.x, new_pose.position.y)
+        self.pose = new_pose
+
 
 class OccGrid(object):
 
@@ -67,6 +86,8 @@ class OccGrid(object):
         self.service_name = service_name
         self.robot_pose_service = rospy.Service("occ_grid_update", SetOccGrid, self.set_occ_grid_service)
         self.should_update = False
+        self.axes = None
+        self.patches = None
 
     def get_occ_grid(self):
         occ_grid_service = rospy.ServiceProxy(self.service_name, GetMap)
@@ -76,32 +97,26 @@ class OccGrid(object):
 
     def set_occ_grid(self, occ_grid):
         # type: (OccupancyGrid) -> None
+        self.occ_grid = occ_grid
         self.width = self.occ_grid.info.width
         self.height = self.occ_grid.info.height
         self.resolution = self.occ_grid.info.resolution
-        self.end.position.x = self.width*self.resolution + self.origin.x
-        self.end.position.y = self.height * self.resolution + self.origin.y
-        if self.occ_grid.info.origin:
-            self.origin = self.occ_grid.info.origin
-        self.occ_grid = np.mat(self.convert_occ_grid(occ_grid.data)).reshape(self.height, self.width).transpose()
-
-    @staticmethod
-    def convert_occ_grid(occ_grid):
-        for elem in np.nditer(occ_grid, op_flags=['readwrite']):
-            if 0 <= elem <= 100:
-                elem = float(elem/100)
-            else:
-                elem = 0.7
-        return occ_grid
+        self.origin = self.occ_grid.info.origin
+        self.end.position.x = self.width*self.resolution + self.origin.position.x
+        self.end.position.y = self.height * self.resolution + self.origin.position.y
+        self.occ_grid = np.mat(self.occ_grid.data).reshape(self.height, self.width).transpose()
 
     def set_occ_grid_service(self, req):
         # type: (SetOccGridRequest) -> None
         self.set_occ_grid(req.map)
 
+    def occ_grid_callback(self, msg):
+        self.set_occ_grid(msg)
+
     def is_free(self, pose):
         sub_pose = Util.subtract_pose(pose, self.origin)
-        x = math.floor(sub_pose/self.width)
-        y = math.floor(sub_pose/self.height)
+        x = int(math.floor(sub_pose.position.x/self.resolution))
+        y = int(math.floor(sub_pose.position.y/self.resolution))
         if 0 <= self.occ_grid[x, y] <= 20:
             return True
         return False
@@ -109,57 +124,119 @@ class OccGrid(object):
     def get_extent(self):
         return [self.origin.position.x, self.end.position.x, self.origin.position.y, self.end.position.y]
 
+    def draw_rectangles(self, fig):
+        ax = fig.axes[0]
+        if self.patches is not None:
+            self.patches.remove()
+        patchs = []
+        origin = np.array(Util.pose2d_to_array(self.origin))
+        resolution = self.resolution
+        x_dim = origin[0] + self.width*self.resolution
+        y_dim = origin[1] + self.height*self.resolution
+        plt.axis([origin[0], x_dim, origin[1], y_dim])
+        for index, elem in np.ndenumerate(self.occ_grid):
+            if elem != 0:
+                if elem == -1:
+                    color = (173, 173, 173)
+                else:
+                    color = (int(1 - elem/100.0), int(1 - elem/100.0), int(1 - elem/100.0))
+                pose = tuple(origin + np.array(index) * resolution)
+                patchs.append(patches.Rectangle(pose, resolution, resolution, color=color))
+        pc = PatchCollection(patchs)
+        ax.add_collection(pc)
+        self.should_update = False
+        self.axes = ax
+        self.patches = pc
+        return ax
 
 class Simulator(object):
+    physics_time = 0.1
 
     def __init__(self):
         self.robots = {}  # type: dict[RobotSimulator]
         self.physics_time = 0.1
+        rospy.init_node('simulator')
         self.vis_time = 0.2
         self.occ_grid = OccGrid("static_map")
-        # self.occ_grid.get_occ_grid()
-        self.physics_thread()
-        self.visual_thread()
+
         self.robot_pose_service = rospy.Service("set_robot_pose", SetRobotPose, self.robot_service)
         self.occ_grid_topic = ""
         self.tesselation_topic = ""
-
+        self.robot_param = ""
         self.occ_grid_subscriber = None  # type: rospy.Subscriber
         self.tesselation_subscriber = None  # type: rospy.Subscriber
 
+        self.voronoi_collection = None
+        self.voronoi_axes = None
+
+        self.obstacle_collection = None
+        self.obstacle_axes = None
+
         self.fig = plt.figure(1)
-        self.bridge = CvBridge()
-        self.images_plot = {}
+        plt.axis([0, 20, 0, 20])
+        self.occ_grid.get_occ_grid()
+
+        self.read_simulator_params()
+        self.read_robot_parameters()
+
+        self.physics_thread()
+        self.visual_thread()
 
     def start(self):
+        self.physics_thread()
+        self.visual_thread()
         plt.show()
 
-    def read_parameters(self):
+    def read_simulator_params(self):
         try:
-            robots_p = rospy.search_param("robots")
-            robots = rospy.get_param(robots_p)
+            sim_p = rospy.search_param("simulator")
+            sim_params = rospy.get_param(sim_p)
+            self.occ_grid_topic = sim_params["occupancy_grid_topic"]
+            self.occ_grid_subscriber = rospy.Subscriber(self.occ_grid_topic, OccupancyGrid, self.occ_grid.set_occ_grid, queue_size=1)
+            self.tesselation_topic = sim_params["tesselation_topic"]
+            self.tesselation_subscriber = rospy.Subscriber(self.tesselation_topic, VoronoiTesselation, queue_size=1)
+            self.robot_param = sim_params["robots_param"]
+        except KeyError:
+            rospy.logfatal("Parameter robots not found. Exiting.")
+            sys.exit(1)
+        except:
+            rospy.logfatal("A non recognized exception raised while getting robots parameter. Exiting")
+            sys.exit(1)
+
+    def read_robot_parameters(self):
+        try:
+            robots = rospy.get_param(self.robot_param)
             if robots is not None and len(robots) > 0:
                 for r in robots:  # type: dict
                     self.create_robot(r["id"], self.conf_to_pose(r["pose"]), r["color"])
         except KeyError:
             rospy.logfatal("Parameter robots not found. Exiting.")
             sys.exit(1)
-        except:
-            rospy.logfatal("A non recognized exception raised while getting robots parameter. Exiting")
+        except Exception as e:
+            rospy.logfatal("A non recognized exception raised while getting robots parameter. Exiting\n" + str(e))
             sys.exit(1)
-        try:
-            sim_p = rospy.search_param("simulator")
-            sim_params = rospy.get_param(sim_p)
-            self.occ_grid_topic = sim_params["occupancy_grid_topic"]
-            self.occ_grid_subscriber = rospy.Subscriber(self.occ_grid_topic, OccupancyGrid, queue_size=1)
-            self.tesselation_topic = sim_params["tesselation_topic"]
-            self.tesselation_subscriber = rospy.Subscriber(self.tesselation_topic, )
-        except KeyError:
-            rospy.logfatal("Parameter robots not found. Exiting.")
-            sys.exit(1)
-        except:
-            rospy.logfatal("A non recognized exception raised while getting robots parameter. Exiting")
-            sys.exit(1)
+
+    def voronoi_callback(self, msg):
+        # type: (VoronoiTesselation) -> None
+        height = msg.height
+        width = msg.width
+        matrix = np.reshape(msg.data, (width, height))
+
+        if self.voronoi_axes is not None:
+            self.voronoi_collection.remove()
+            self.fig.delaxes(self.voronoi_axes)
+
+        self.voronoi_axes = self.fig.add_subplot(111, aspect='equal')
+        patchs = []
+        origin = np.array(Util.pose2d_to_array(self.occ_grid.origin))
+        resolution = self.occ_grid.resolution
+        for index, elem in np.ndenumerate(matrix):
+            if elem != 0:
+                pose = tuple(origin + np.array(index) * resolution)
+                patchs.append(patches.Rectangle(pose, resolution, resolution, self.robots[str(elem)].color))
+        self.voronoi_collection = PatchCollection(patchs)
+        self.voronoi_axes.add_collection(self.voronoi_collection)
+
 
     @staticmethod
     def conf_to_pose(pose_conf):
@@ -200,19 +277,6 @@ class Simulator(object):
         occ_grid_img[:,:,3] = self.occ_grid.occ_grid
         pass
 
-    def add_image(self, data, extent, id=""):
-        # type: (Image) -> None
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
-            self.images_plot[id] = self.plot_image(cv_image, extent)
-        except CvBridgeError as e:
-            print(e)
-
-    def remove_image(self, img):
-        # type: (mpimg.AxesImage) -> None
-        img.remove()
-        img.figure.canvas.draw()
-
     def robot_service(self, req):
         # type: (SetRobotPoseRequest) -> object
         try:
@@ -221,38 +285,27 @@ class Simulator(object):
             rospy.logerr(e.message)
         return None
 
-    def surf_service(self, req):
-        pass
-
-    def colorplot_service(self, req):
-        # type: (SetColorPlotRequest) -> object
-        pass
-
     def physics_thread(self):
-        # threading.Timer(self.physics_time, self.physics_thread).start()
-        # for robot in self.robots.values():
-        #    robot.pose = self.update_pose_diff(robot.pose, robot.s, self.physics_time)
-        pass
+        for robot in self.robots.values():
+            robot.update_pose_diff(self.occ_grid)
+        threading.Timer(self.physics_time, self.physics_thread).start()
 
     def visual_thread(self):
-        # threading.Timer(self.vis_time, self.visual_thread).start()
+        # for robot in self.robots.itervalues():
+        if self.occ_grid.should_update:
+            self.occ_grid.draw_rectangles(self.fig)
+
+        threading.Timer(self.vis_time, self.visual_thread).start()
+
+
+def main():
+    sim = Simulator()
+    sim.start()
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except rospy.ROSInterruptException:
         pass
-
-    def update_pose_diff(self, pose, vel, time):
-        # type: (Pose, Twist, float) -> Pose
-        w = Util.quaternion_get_yaw(pose.orientation)
-
-        w_dot = vel.angular.z * time
-        x_dot = vel.linear.x * math.cos(Pose.orientation.z)
-        y_dot = vel.linear.x * math.sin(Pose.orientation.z)
-        new_pose = Pose()
-
-        w = w + w_dot
-        new_pose.position.x = pose.position.x + x_dot
-        new_pose.position.y = pose.position.y + y_dot
-        new_pose.orientation = Util.get_quaternion_fom_euler([0, 0, w])
-        if self.occ_grid.is_free(new_pose):
-            return new_pose
-        else:
-            return pose
 

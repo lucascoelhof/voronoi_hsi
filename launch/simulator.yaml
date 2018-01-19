@@ -1,0 +1,3 @@
+occupancy_grid_topic: "/voronoi/map"
+tesselation_topic: "/voronoi/voronoi_tesselation"
+robots_param: "/voronoi/robots"
