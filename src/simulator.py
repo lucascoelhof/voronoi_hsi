@@ -32,7 +32,7 @@ class RobotSimulator(simulator_util.DraggablePoint):
         self.color = color
         self.id = id_robot
         self.speed_callback = rospy.Subscriber("robot_" + str(self.id) + "/cmd_vel", Twist, self.robot_vel_callback, queue_size=1)
-        self.pose_publisher = rospy.Publisher("robot_" + str(self.id) + "/pose", Odometry, queue_size=10)
+        self.pose_publisher = rospy.Publisher("robot_" + str(self.id) + "/base_pose_ground_truth", Odometry, queue_size=10)
 
     def robot_vel_callback(self, msg):
         # type: (Twist) -> None
@@ -70,7 +70,6 @@ class RobotSimulator(simulator_util.DraggablePoint):
         new_pose.orientation = Util.get_quaternion_fom_euler([0, 0, w])
         if occ_grid.is_free(new_pose):
             self.pose = new_pose
-            self.publish_pose()
             if not almost_equal(x_dot, 0) or not almost_equal(y_dot, 0):
                 self.set_point_pose(new_pose.position.x, new_pose.position.y)
 
@@ -83,9 +82,12 @@ class RobotSimulator(simulator_util.DraggablePoint):
 
 class OccGrid(object):
 
-    def __init__(self, service_name):
+    should_update = False
+
+    def __init__(self, service_name, figure):
         self.width = 0
         self.height = 0
+        self.fig = figure
         self.resolution = 0
         self.occ_grid = None  # type: np.matrix
         self.origin = Pose()
@@ -100,10 +102,10 @@ class OccGrid(object):
         occ_grid_service = rospy.ServiceProxy(self.service_name, GetMap)
         occ_grid = occ_grid_service().map
         self.set_occ_grid(occ_grid)
-        self.should_update = True
 
     def set_occ_grid(self, occ_grid):
         # type: (OccupancyGrid) -> None
+        print("got occ grid")
         self.occ_grid = occ_grid
         self.width = self.occ_grid.info.width
         self.height = self.occ_grid.info.height
@@ -112,6 +114,8 @@ class OccGrid(object):
         self.end.position.x = self.width*self.resolution + self.origin.position.x
         self.end.position.y = self.height * self.resolution + self.origin.position.y
         self.occ_grid = np.mat(self.occ_grid.data).reshape(self.height, self.width).transpose()
+        print("Should update")
+        self.draw_rectangles()
 
     def set_occ_grid_service(self, req):
         # type: (SetOccGridRequest) -> None
@@ -120,7 +124,7 @@ class OccGrid(object):
     def occ_grid_callback(self, msg):
         self.set_occ_grid(msg)
 
-    def is_free(self, pose):
+    def is_free(self, pose, radius=0.2):
         sub_pose = Util.subtract_pose(pose, self.origin)
         x = int(math.floor(sub_pose.position.x/self.resolution))
         y = int(math.floor(sub_pose.position.y/self.resolution))
@@ -132,9 +136,9 @@ class OccGrid(object):
     def get_extent(self):
         return [self.origin.position.x, self.end.position.x, self.origin.position.y, self.end.position.y]
 
-    def draw_rectangles(self, fig):
-        ax = fig.axes[0]
-
+    def draw_rectangles(self):
+        ax = self.fig.axes[0]
+        print("drawing new occ grid")
         patchs = []
         origin = np.array(Util.pose2d_to_array(self.origin))
         resolution = self.resolution
@@ -149,13 +153,15 @@ class OccGrid(object):
                     color = (int(1 - elem/100.0)+0.15, int(1 - elem/100.0)+0.15, int(1 - elem/100.0)+0.15)
                 pose = tuple(origin + np.array(index) * resolution)
                 patchs.append(patches.Rectangle(pose, resolution, resolution, facecolor=color, edgecolor=(0.1, 0.1, 0.1)))
-        pc = PatchCollection(patchs, match_original=True)
+        pc = PatchCollection(patchs, match_original=True, zorder=30)
+        ax.add_collection(pc)
+        #self.fig.canvas.draw()
         if self.patches is not None:
             self.patches.remove()
-        ax.add_collection(pc)
-        self.should_update = False
         self.axes = ax
         self.patches = pc
+        print("finished drawing occ grid")
+        OccGrid.should_update = True
         return ax
 
 
@@ -163,11 +169,11 @@ class Simulator(object):
     physics_time = 0.1
 
     def __init__(self):
+        self.printing_voronoi = False
         self.robots = {}  # type: dict
-        self.physics_time = 0.1
+        self.physics_time = 0.05
         rospy.init_node('simulator')
-        self.vis_time = 0.1
-        self.occ_grid = OccGrid("static_map")
+        self.vis_time = 0.05
 
         self.robot_pose_service = rospy.Service("set_robot_pose", SetRobotPose, self.robot_service)
         self.occ_grid_topic = ""
@@ -186,14 +192,12 @@ class Simulator(object):
         self.fig = plt.figure(1)
         plt.gca().set_aspect('equal', adjustable='box')
         plt.axis([0, 20, 0, 20])
+        self.occ_grid = OccGrid("static_map", self.fig)
         self.occ_grid.get_occ_grid()
         self.fig.canvas.draw()
 
         self.read_simulator_params()
         self.read_robot_parameters()
-
-        #self.physics_thread()
-        #self.visual_thread()
 
     def start(self):
         self.physics_thread()
@@ -230,6 +234,12 @@ class Simulator(object):
             sys.exit(1)
 
     def voronoi_callback(self, msg):
+        if self.printing_voronoi:
+            print("Skipping printing voronoi, not done yet.")
+            return
+        else:
+            self.printing_voronoi = True
+        Util.tic()
         # type: (VoronoiTesselation) -> None
         height = msg.height
         width = msg.width
@@ -245,12 +255,14 @@ class Simulator(object):
                 color = self.robots[elem].color
                 color_t = (color[0]/255.0, color[1]/255.0, color[2]/255.0)
                 patchs.append(patches.Rectangle(pose, resolution, resolution, color=color_t))
-        voronoi_collection_new = PatchCollection(patchs, match_original=True)
+        voronoi_collection_new = PatchCollection(patchs, match_original=True, zorder=10)
         if self.voronoi_axes is not None and self.voronoi_collection is not None:
             self.voronoi_collection.remove()
         self.voronoi_axes.add_collection(voronoi_collection_new)
         self.voronoi_collection = voronoi_collection_new
         self.voronoi_should_draw = True
+        self.printing_voronoi = False
+        print("Took " + str(Util.toc()) + " to print voronoi")
 
     @staticmethod
     def conf_to_pose(pose_conf):
@@ -302,14 +314,14 @@ class Simulator(object):
     def physics_thread(self):
         for robot in self.robots.values():  # type: RobotSimulator
             robot.update_pose_diff(self.occ_grid)
+            robot.publish_pose()
         threading.Timer(self.physics_time, self.physics_thread).start()
 
     def visual_thread(self):
-        # for robot in self.robots.itervalues():
         should_draw = False
         if self.occ_grid.should_update:
-            self.occ_grid.draw_rectangles(self.fig)
             should_draw = True
+            OccGrid.should_update = False
         if self.voronoi_should_draw:
             self.voronoi_should_draw = False
             should_draw = True

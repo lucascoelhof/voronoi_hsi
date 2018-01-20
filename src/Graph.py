@@ -17,7 +17,7 @@ class Graph:
         self.width = 0
         self.height = 0
         self.occ_grid = None # type: np.array
-        # self.occ_grid_sub = rospy.Subscriber(occ_grid_topic, OccupancyGrid, self.occ_grid_callback)
+        self.occ_grid_sub = rospy.Subscriber("/voronoi/map", OccupancyGrid, self.occ_grid_callback)
 
         self.resize = rospy.get_param("/voronoi/topic_info/occ_grid_resize", 1)
 
@@ -28,6 +28,7 @@ class Graph:
 
     def occ_grid_callback(self, msg):
         # type: (OccupancyGrid) -> None
+        print("occ grid calback called")
         self.set_occ_grid(msg)
 
     def set_occ_grid(self, map_msg):

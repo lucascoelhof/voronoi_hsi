@@ -34,13 +34,7 @@ class DraggablePoint(object):
         if not contains: return
         self.press = (self.point.center), event.xdata, event.ydata
         DraggablePoint.lock = self
-        canvas = self.point.figure.canvas
-        axes = self.point.axes
-        self.point.set_animated(True)
-        canvas.draw()
-        self.background = canvas.copy_from_bbox(self.point.axes.bbox)
-        axes.draw_artist(self.point)
-        canvas.blit(axes.bbox)
+        self.refresh()
 
     def on_motion(self, event):
         if DraggablePoint.lock is not self:
@@ -63,7 +57,6 @@ class DraggablePoint(object):
     def on_release(self, event):
         if DraggablePoint.lock is not self:
             return
-
         self.press = None
         DraggablePoint.lock = None
         self.point.set_animated(False)
