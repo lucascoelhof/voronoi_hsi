@@ -31,7 +31,7 @@ class RobotSimulator(simulator_util.DraggablePoint):
         self.speed = Twist()
         self.color = color
         self.id = id_robot
-        self.speed_callback = rospy.Subscriber("robot_" + str(self.id) + "/cmd_vel", Twist, queue_size=1)
+        self.speed_callback = rospy.Subscriber("robot_" + str(self.id) + "/cmd_vel", Twist, self.robot_vel_callback, queue_size=1)
         self.pose_publisher = rospy.Publisher("robot_" + str(self.id) + "/pose", Odometry, queue_size=10)
 
     def robot_vel_callback(self, msg):
@@ -57,7 +57,6 @@ class RobotSimulator(simulator_util.DraggablePoint):
 
     def update_pose_diff(self, occ_grid):
         # type: (OccGrid) -> None
-        self.lock
         w = Util.quaternion_get_yaw(self.pose.orientation)
 
         w_dot = self.speed.angular.z * Simulator.physics_time
@@ -69,9 +68,17 @@ class RobotSimulator(simulator_util.DraggablePoint):
         new_pose.position.x = self.pose.position.x + x_dot
         new_pose.position.y = self.pose.position.y + y_dot
         new_pose.orientation = Util.get_quaternion_fom_euler([0, 0, w])
-        if occ_grid.is_free(new_pose) and (not almost_equal(x_dot, 0) or not almost_equal(y_dot, 0)):
-            self.set_point_pose(new_pose.position.x, new_pose.position.y)
-        self.pose = new_pose
+        if occ_grid.is_free(new_pose):
+            self.pose = new_pose
+            self.publish_pose()
+            if not almost_equal(x_dot, 0) or not almost_equal(y_dot, 0):
+                self.set_point_pose(new_pose.position.x, new_pose.position.y)
+
+    def publish_pose(self):
+        odom = Odometry()
+        odom.pose.pose.position = self.pose.position
+        odom.pose.pose.orientation = self.pose.orientation
+        self.pose_publisher.publish(odom)
 
 
 class OccGrid(object):
@@ -117,8 +124,9 @@ class OccGrid(object):
         sub_pose = Util.subtract_pose(pose, self.origin)
         x = int(math.floor(sub_pose.position.x/self.resolution))
         y = int(math.floor(sub_pose.position.y/self.resolution))
-        if 0 <= self.occ_grid[x, y] <= 20:
-            return True
+        if 0 <= x < self.width and 0 <= y < self.height:
+            if 0 <= self.occ_grid[x, y] <= 20:
+                return True
         return False
 
     def get_extent(self):
@@ -136,11 +144,11 @@ class OccGrid(object):
         for index, elem in np.ndenumerate(self.occ_grid):
             if elem != 0:
                 if elem == -1:
-                    color = (173, 173, 173)
+                    color = (173/255.0, 173/255.0, 173/255.0)
                 else:
-                    color = (int(1 - elem/100.0), int(1 - elem/100.0), int(1 - elem/100.0))
+                    color = (int(1 - elem/100.0)+0.15, int(1 - elem/100.0)+0.15, int(1 - elem/100.0)+0.15)
                 pose = tuple(origin + np.array(index) * resolution)
-                patchs.append(patches.Rectangle(pose, resolution, resolution, color=color))
+                patchs.append(patches.Rectangle(pose, resolution, resolution, facecolor=color, edgecolor=(0.1, 0.1, 0.1)))
         pc = PatchCollection(patchs, match_original=True)
         if self.patches is not None:
             self.patches.remove()
@@ -158,7 +166,7 @@ class Simulator(object):
         self.robots = {}  # type: dict
         self.physics_time = 0.1
         rospy.init_node('simulator')
-        self.vis_time = 0.2
+        self.vis_time = 0.1
         self.occ_grid = OccGrid("static_map")
 
         self.robot_pose_service = rospy.Service("set_robot_pose", SetRobotPose, self.robot_service)
@@ -179,12 +187,13 @@ class Simulator(object):
         plt.gca().set_aspect('equal', adjustable='box')
         plt.axis([0, 20, 0, 20])
         self.occ_grid.get_occ_grid()
+        self.fig.canvas.draw()
 
         self.read_simulator_params()
         self.read_robot_parameters()
 
-        self.physics_thread()
-        self.visual_thread()
+        #self.physics_thread()
+        #self.visual_thread()
 
     def start(self):
         self.physics_thread()
@@ -291,19 +300,25 @@ class Simulator(object):
         return None
 
     def physics_thread(self):
-        for robot in self.robots.values():
+        for robot in self.robots.values():  # type: RobotSimulator
             robot.update_pose_diff(self.occ_grid)
         threading.Timer(self.physics_time, self.physics_thread).start()
 
     def visual_thread(self):
         # for robot in self.robots.itervalues():
+        should_draw = False
         if self.occ_grid.should_update:
             self.occ_grid.draw_rectangles(self.fig)
-            self.fig.canvas.draw()
+            should_draw = True
         if self.voronoi_should_draw:
             self.voronoi_should_draw = False
+            should_draw = True
+        # for robot in self.robots.values():  # type: RobotSimulator
+        #     if robot.should_draw:
+        #         should_draw = True
+        #     robot.should_draw = False
+        if should_draw:
             self.fig.canvas.draw()
-        threading.Timer(self.vis_time, self.visual_thread).start()
 
 
 def main():
