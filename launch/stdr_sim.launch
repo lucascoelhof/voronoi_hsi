@@ -1,0 +1,13 @@
+<launch>
+	<include file="$(find stdr_robot)/launch/robot_manager.launch" />
+	<node type="stdr_server_node" pkg="stdr_server" name="stdr_server" output="screen" args="$(find stdr_resources)/maps/sparse_obstacles.yaml">
+        <remap from="map" to="stdr_map"/>
+    </node>
+	<node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />
+	<include file="$(find stdr_gui)/launch/stdr_gui.launch"/>
+
+    <node pkg="stdr_robot" type="robot_handler" name="robot_0" args="add $(find stdr_resources)/resources/robots/pandora_robot.yaml 10 3.266 0" />
+    <node pkg="stdr_robot" type="robot_handler" name="robot_1" args="add $(find stdr_resources)/resources/robots/pandora_robot.yaml 3.277 2.266 0" />
+    <node pkg="stdr_robot" type="robot_handler" name="robot_2" args="add $(find stdr_resources)/resources/robots/pandora_robot.yaml 7.2 6.6 0" />
+	<node pkg="stdr_robot" type="robot_handler" name="robot_3" args="add $(find stdr_resources)/resources/robots/pandora_robot.yaml 11.277 6.6 0" />
+</launch>
