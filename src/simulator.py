@@ -136,33 +136,21 @@ class OccGrid(object):
     def get_extent(self):
         return [self.origin.position.x, self.end.position.x, self.origin.position.y, self.end.position.y]
 
-    def draw_rectangles(self):
-        ax = self.fig.axes[0]
-        print("drawing new occ grid")
-        patchs = []
-        origin = np.array(Util.pose2d_to_array(self.origin))
-        resolution = self.resolution
-        x_dim = origin[0] + self.width*self.resolution
-        y_dim = origin[1] + self.height*self.resolution
-        plt.axis([origin[0], x_dim, origin[1], y_dim])
-        for index, elem in np.ndenumerate(self.occ_grid):
-            if elem != 0:
+    def occ_grid_to_img(self):
+        image = np.copy(self.occ_grid)
+        for i in range(self.width):
+            for j in range(self.height):
+                elem = self.occ_grid[i, j]
                 if elem == -1:
-                    color = (173/255.0, 173/255.0, 173/255.0)
+                    image[i, j] = 173
                 else:
-                    color = (int(1 - elem/100.0)+0.15, int(1 - elem/100.0)+0.15, int(1 - elem/100.0)+0.15)
-                pose = tuple(origin + np.array(index) * resolution)
-                patchs.append(patches.Rectangle(pose, resolution, resolution, facecolor=color, edgecolor=(0.1, 0.1, 0.1)))
-        pc = PatchCollection(patchs, match_original=True, zorder=30)
-        ax.add_collection(pc)
-        #self.fig.canvas.draw()
-        if self.patches is not None:
-            self.patches.remove()
-        self.axes = ax
-        self.patches = pc
-        print("finished drawing occ grid")
-        OccGrid.should_update = True
-        return ax
+                    image[i, j] = int((1 - elem/100.0)*255)
+        return np.rot90(image)
+
+    def draw_rectangles(self, fig):
+        image = self.occ_grid_to_img()
+        extent = self.get_extent()
+        plt.imshow(image, extent=extent, zorder=0, interpolation='nearest', cmap="gray")
 
 
 class Simulator(object):
@@ -245,24 +233,19 @@ class Simulator(object):
         width = msg.width
         matrix = np.reshape(msg.data, (width, height))
 
-        self.voronoi_axes = self.fig.axes[0]
-        patchs = []
-        origin = np.array(Util.pose2d_to_array(self.occ_grid.origin))
-        resolution = self.occ_grid.resolution
-        for index, elem in np.ndenumerate(matrix):
-            if elem != -1:
-                pose = tuple(origin + np.array(index) * resolution)
-                color = self.robots[elem].color
-                color_t = (color[0]/255.0, color[1]/255.0, color[2]/255.0)
-                patchs.append(patches.Rectangle(pose, resolution, resolution, color=color_t))
-        voronoi_collection_new = PatchCollection(patchs, match_original=True, zorder=10)
-        if self.voronoi_axes is not None and self.voronoi_collection is not None:
-            self.voronoi_collection.remove()
-        self.voronoi_axes.add_collection(voronoi_collection_new)
-        self.voronoi_collection = voronoi_collection_new
-        self.voronoi_should_draw = True
-        self.printing_voronoi = False
-        print("Took " + str(Util.toc()) + " to print voronoi")
+        image = np.empty((width, height, 4))
+        for i in range(width):
+            for j in range(height):
+                elem = matrix[i, j]
+                if elem != -1:
+                    color = self.robots[elem].color
+                    image[i, j] = (np.asarray(color + [0])/255.0)
+                    image[i, j, 3] = 1
+                else:
+                    image[i, j] = np.asarray([0, 0, 0, 0])
+        extent = self.occ_grid.get_extent()
+
+        plt.imshow(np.rot90(image), extent=extent, zorder=10, interpolation="nearest")
 
     @staticmethod
     def conf_to_pose(pose_conf):
@@ -296,12 +279,11 @@ class Simulator(object):
             self.robots.pop(id, None)
 
     def plot_image(self, image, extent):
-        return plt.imshow(image, extent=extent)
+        return plt.imshow(image, extent=extent, interpolation="nearest")
 
     def plot_occ_grid(self):
         occ_grid_img = np.zeros((self.occ_grid.width, self.occ_grid.height, 4), dtype=float)
         occ_grid_img[:,:,3] = self.occ_grid.occ_grid
-        pass
 
     def robot_service(self, req):
         # type: (SetRobotPoseRequest) -> object

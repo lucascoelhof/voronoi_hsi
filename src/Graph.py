@@ -1,6 +1,7 @@
 import copy
 import math
 import numpy as np
+import cv2
 
 import rospy
 from nav_msgs.srv import GetMap
@@ -38,7 +39,14 @@ class Graph:
         self.resolution = map_msg.info.resolution*self.resize
         self.occ_grid = np.mat(map_msg.data).reshape(map_msg.info.height, map_msg.info.width)  # type: np.array()
         self.occ_grid = self.occ_grid.transpose()
-        # self.occ_grid = self.occ_grid_resample(self.occ_grid, self.width, self.height, self.resize)
+        resized_occ_grid = cv2.resize(self.occ_grid, dsize=(self.width*10, self.height*10), interpolation=cv2.INTER_NEAREST)
+        occ_grid = OccupancyGrid()
+        data_occ = (resized_occ_grid.transpose().flatten()).astype(int)
+        occ_grid.data = data_occ
+        occ_grid.info.width = self.width*10
+        occ_grid.info.height = self.height*10
+        occ_grid.info.resolution = self.resolution/10.0
+        self.map_publisher.publish(occ_grid)
 
     def get_node(self, pose):
         """

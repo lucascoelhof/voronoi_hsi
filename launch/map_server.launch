@@ -1,3 +1,5 @@
 <launch>
-    <node name="map_server" pkg="map_server" type="map_server" args="$(find voronoi_hsi)/launch/map_server.yaml"/>
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find voronoi_hsi)/launch/map_server.yaml">
+            <remap from="/map" to="/voronoi/map"/>
+    </node>
 </launch>

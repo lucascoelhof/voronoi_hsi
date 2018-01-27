@@ -17,3 +17,11 @@ src/*.pyc
 \.idea/dictionaries/
 
 .idea/*
+
+src/\.idea/misc\.xml
+
+src/\.idea/modules\.xml
+
+src/\.idea/src\.iml
+
+src/\.idea/workspace\.xml

@@ -5,6 +5,7 @@ from Queue import PriorityQueue
 
 import rospy
 from nav_msgs.srv import GetMap
+from nav_msgs.msg import OccupancyGrid
 from sensor_msgs.msg import Image
 from voronoi_hsi.msg import *
 
@@ -14,7 +15,6 @@ from Graph import Graph
 from Robot import Robot
 from Util import tic, toc
 from ControlLaw import ControlLawVoronoi
-import matplotlib.pyplot as plt
 
 
 class Voronoi:
@@ -23,7 +23,6 @@ class Voronoi:
 
         self.loop_time = loop_time
 
-        self.dir_info = {}
         self.topic_info = {}
         self.robot_control_info = {}
         self.adapting_weight_constant = 1
@@ -50,14 +49,14 @@ class Voronoi:
         self.gaussian.sigma_x = 999999999999
         self.gaussian.sigma_y = 999999999999
 
+        self.graph = Graph(self.topic_info["occupancy_grid_service"], self.topic_info["occupancy_grid_topic"])
 
-        self.occ_grid = None
+        self.occ_grid_subscriber = rospy.Subscriber(self.topic_info["occupancy_grid_topic"], OccupancyGrid, self.occ_grid_callback)
         self.grey_img = None
         self.img_width = 0
         self.img_height = 0
         self.robot_color = [50, 50, 50]
 
-        self.graph = Graph(self.topic_info["occupancy_grid_service"], self.topic_info["occupancy_grid_topic"])
 
         self.init_density_dist()
         self.init_tesselation_image()
@@ -70,13 +69,15 @@ class Voronoi:
 
     def init_tesselation_image(self):
         occ_grid_service = rospy.ServiceProxy(self.topic_info["occupancy_grid_service"], GetMap)
-        self.occ_grid = occ_grid_service().map
-        self.set_image()
+        occ_grid = occ_grid_service().map
+        self.occ_grid_callback(occ_grid)
 
-    def set_image(self):
-        self.img_width = self.occ_grid.info.width
-        self.img_height = self.occ_grid.info.height
-        self.grey_img = np.mat(self.occ_grid_to_img(self.occ_grid.data)).reshape(self.img_height, self.img_width).transpose()
+    def occ_grid_callback(self, msg):
+        # type: (OccupancyGrid) -> None
+        self.graph.set_occ_grid(msg)
+        self.img_width = msg.info.width
+        self.img_height = msg.info.height
+        self.grey_img = np.mat(self.graph.occ_grid)
         self.clear_image()
 
     @staticmethod
@@ -104,14 +105,6 @@ class Voronoi:
                 pose = self.graph.nodes[i][j].pose  # type: list
                 val = self.gaussian2d(self.gaussian, pose[0], pose[1])
                 self.density[i, j] = val
-        # x_axis = np.linspace(0, self.graph.width*self.graph.resolution, self.graph.width)
-        # y_axis = np.linspace(0, self.graph.height*self.graph.resolution, self.graph.height)
-
-        # plt.figure(1)
-        # plt.imshow(self.density, extent=[0, 20, 0, 20])
-        # plt.grid(True)
-        # plt.interactive(False)
-        # plt.show()
 
     @staticmethod
     def gaussian2d(gaussian, x, y):
@@ -216,7 +209,6 @@ class Voronoi:
                 print("Goal: " + str(best_node.pose))
                 robot.control.set_goal(best_node.pose)
 
-
         self.publish_tesselation_image()
         self.publish_voronoi()
         self.adapt_weights()
@@ -295,7 +287,6 @@ class Voronoi:
             rospy.logerr("Error while setting tesselation publishers: " + str(e))
 
     def get_params(self):
-        self.get_dir_info_param()
         self.get_topic_info_param()
         self.get_robots_param()
         self.get_robot_control_info_param()
@@ -323,16 +314,6 @@ class Voronoi:
             sys.exit(1)
         except:
             rospy.logfatal("A non recognized exception raised while getting topic_info parameter. Exiting")
-            sys.exit(1)
-
-    def get_dir_info_param(self):
-        try:
-            self.dir_info = rospy.get_param("/voronoi/dir_info")
-        except KeyError:
-            rospy.logfatal("Parameter dir_info not found. Exiting.")
-            sys.exit(1)
-        except:
-            rospy.logfatal("A non recognized exception raised while getting dir_info parameter. Exiting")
             sys.exit(1)
 
     def get_robot_control_info_param(self):
