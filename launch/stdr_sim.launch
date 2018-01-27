@@ -1,6 +1,6 @@
 <launch>
 	<include file="$(find stdr_robot)/launch/robot_manager.launch" />
-	<node type="stdr_server_node" pkg="stdr_server" name="stdr_server" output="screen" args="$(find stdr_resources)/maps/sparse_obstacles.yaml">
+	<node type="stdr_server_node" pkg="stdr_server" name="stdr_server" output="screen" args="$(find voronoi_hsi)/launch/map_server.yaml">
         <remap from="map" to="stdr_map"/>
     </node>
 	<node pkg="tf" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0  world map 100" />

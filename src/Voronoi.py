@@ -49,13 +49,14 @@ class Voronoi:
         self.gaussian.sigma_x = 999999999999
         self.gaussian.sigma_y = 999999999999
 
+        self.graph = Graph(self.topic_info["occupancy_grid_service"], self.topic_info["occupancy_grid_topic"])
+
         self.occ_grid_subscriber = rospy.Subscriber(self.topic_info["occupancy_grid_topic"], OccupancyGrid, self.occ_grid_callback)
         self.grey_img = None
         self.img_width = 0
         self.img_height = 0
         self.robot_color = [50, 50, 50]
 
-        self.graph = Graph(self.topic_info["occupancy_grid_service"], self.topic_info["occupancy_grid_topic"])
 
         self.init_density_dist()
         self.init_tesselation_image()
