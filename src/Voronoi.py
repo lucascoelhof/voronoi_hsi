@@ -1,4 +1,3 @@
-import sys
 import math
 import numpy as np
 from Queue import PriorityQueue
@@ -234,7 +233,6 @@ class Voronoi:
         for robot, w_dot in zip(self.robots.values(), w_del_robots):
             robot.weight += w_dot
             robot.weight_publisher.publish(robot.weight)
-
 
     def k_func(self, kp, kdel):
         return np.linalg.norm(kp + kdel)/np.linalg.norm(kp)

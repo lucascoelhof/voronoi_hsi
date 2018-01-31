@@ -5,7 +5,6 @@ import rospy
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 
-import Util
 from ControlLaw import ControlLawDiff
 
 
@@ -13,8 +12,7 @@ class RobotControl(Thread):
 
     def __init__(self, loop_rate=10):
         Thread.__init__(self)
-        self.loop_rate = loop_rate
-
+        self.period = 1.0/loop_rate
         self.pose = Pose()
         self.pose_updater = None
         self.speed_pub = None
@@ -45,17 +43,16 @@ class RobotControl(Thread):
         self.goal = goal
 
     def run(self):
-        rate = Util.Rate(self.loop_rate)
-        while not rospy.is_shutdown():
+        rospy.Timer(rospy.Duration.from_sec(self.period), self.control_loop)
+
+    def control_loop(self, event):
+        if not rospy.is_shutdown():
             if self.goal is not None and len(self.goal) > 0:  # and self.goal check if the list is not empty
                 v, w = self.control_law.get_speed(self.pose_updater(), self.goal)
                 speed_msg = Twist()
                 speed_msg.linear.x = v
                 speed_msg.angular.z = w
                 self.speed_pub.publish(speed_msg)
-                rate.sleep()
 
     def get_kp(self):
         return np.matrix([[self.control_law.kv, 0], [0, self.control_law.kv]])
-
-

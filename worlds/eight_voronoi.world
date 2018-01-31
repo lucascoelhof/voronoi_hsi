@@ -55,7 +55,7 @@ window
 floorplan
 ( 
   name "willow"
-  bitmap "../launch/map.pgm"
+  bitmap "square800.pgm"
   size [20.000 20.000 0.500]
   pose [10.000 10.000 0.000 0.000]
 )

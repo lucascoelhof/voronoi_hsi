@@ -3,7 +3,7 @@ topic_info: {
   occupancy_grid_topic: "/voronoi/map",
   occupancy_grid_service: "static_map",
   speed_topic: "cmd_vel",
-  pose_topic: "pose",
+  pose_topic: "base_pose_ground_truth",
   robot_prefix: "robot_",
   density_topic: "/voronoi/density_dist",
   tesselation_topic: "/voronoi/tesselation",
