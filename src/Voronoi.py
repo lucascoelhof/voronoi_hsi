@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import random
 from Queue import PriorityQueue
 
 import rospy
@@ -48,6 +49,9 @@ class Voronoi:
         self.gaussian.sigma_x = 999999999999
         self.gaussian.sigma_y = 999999999999
 
+        self.obstacle_id_start = 10000
+        self.obstacle_id = self.obstacle_id_start
+
         self.graph = Graph(self.topic_info["occupancy_grid_service"], self.topic_info["occupancy_grid_topic"])
 
         self.occ_grid_subscriber = rospy.Subscriber(self.topic_info["occupancy_grid_topic"], OccupancyGrid, self.occ_grid_callback)
@@ -71,8 +75,23 @@ class Voronoi:
         occ_grid = occ_grid_service().map
         self.occ_grid_callback(occ_grid)
 
+    def create_obstacle(self, node):
+        id = self.obstacle_id
+        self.obstacle_id += 1
+        color = [150, 150, 150]
+        obst = Robot(id, 0.5, color, xd=1, yd=1)
+        obst.control.control_law = ControlLawVoronoi()
+        self.robots[id] = obst
+
     def occ_grid_callback(self, msg):
         # type: (OccupancyGrid) -> None
+        new_occ_grid = self.graph.build_occ_grid(msg)
+        if self.graph.occ_grid is not None:
+            for i in range(msg.info.width):
+                for j in range(msg.info.height):
+                    if new_occ_grid[i, j] != self.graph.occ_grid[i, j]:
+                        self.create_obstacle(self.graph.get_node_from_index(i, j))
+
         self.graph.set_occ_grid(msg)
         self.img_width = msg.info.width
         self.img_height = msg.info.height
@@ -220,6 +239,8 @@ class Voronoi:
         return h_func
 
     def robot_reached_goal(self, robot):
+        if not robot.control.goal:
+            return False
         goal = self.graph.get_node(robot.control.goal)
         node = self.graph.get_node(robot.pose)
         return goal == node
@@ -231,6 +252,8 @@ class Voronoi:
             Kdel = robot.get_kdel()
             diff_sum = 0
             for robot_neigh in self.robots.values():  # type: Robot
+                if robot_neigh.id > self.obstacle_id_start:
+                    continue
                 kdel_neigh = robot_neigh.get_kdel()
                 kp_neigh = robot_neigh.control.get_kp()
                 if robot is robot_neigh:
@@ -242,6 +265,9 @@ class Voronoi:
         for robot, w_dot in zip(self.robots.values(), w_del_robots):
             robot.weight += w_dot
             robot.weight_publisher.publish(robot.weight)
+            if robot.weight < 0.2:
+                del self.robots[robot.id]
+                print("Removed robot " + robot.id)
 
     def k_func(self, kp, kdel):
         return np.linalg.norm(kp + kdel)/np.linalg.norm(kp)
@@ -303,7 +329,7 @@ class Voronoi:
             robots = rospy.get_param("/voronoi/robots")
             if robots is not None and len(robots) > 0:
                 for r in robots:
-                    robot = Robot(r["id"], r["weight"], r["color"])
+                    robot = Robot(r["id"], r["weight"], r["color"], xd=r["xd"], yd=r["yd"])
                     print("robot" + str(robot.id) + " w:" + str(robot.weight))
                     self.robots[robot.id] = robot
         except KeyError:
