@@ -1,10 +1,10 @@
 robots: [
-{id: 0, color: [174, 38, 38], weight: 1, xd: 0, yd: 0, pose:[2, 2, 0]},
-{id: 1, color: [255, 233, 0], weight: 1, xd: 0, yd: 0, pose:[3, 2, 0]},
-{id: 2, color: [70, 130, 180], weight: 1, xd: 0, yd: 0, pose:[4, 2, 0]},
-{id: 3, color: [84, 255, 159], weight: 1, xd: 0, yd: 0, pose:[4, 3, 0]},
-{id: 4, color: [139, 69, 19], weight: 1, xd: 0, yd: 0, pose:[4, 4, 0]},
-{id: 5, color: [125, 38, 205], weight: 1, xd: 0, yd: 0, pose:[3, 4, 0]},
-{id: 6, color: [255, 165, 0], weight: 1, xd: 0, yd: 0, pose:[2, 4, 0]},
-{id: 7, color: [255, 105, 180], weight: 1, xd: 0, yd: 0, pose:[2, 3, 0]},
+{id: 0, color: [234, 32, 39], weight: 1, xd: 0, yd: 0, pose:[2, 2, 0]},
+{id: 1, color: [0, 148, 50], weight: 1, xd: 0, yd: 0, pose:[3, 2, 0]},
+{id: 2, color: [6, 82, 221], weight: 1, xd: 0, yd: 0, pose:[4, 2, 0]},
+{id: 3, color: [255, 195, 18], weight: 1, xd: 0, yd: 0, pose:[4, 3, 0]},
+{id: 4, color: [253, 167, 223], weight: 1, xd: 0, yd: 0, pose:[4, 4, 0]},
+{id: 5, color: [18, 203, 196], weight: 1, xd: 0, yd: 0, pose:[3, 4, 0]},
+{id: 6, color: [111, 30, 81], weight: 1, xd: 0, yd: 0, pose:[2, 4, 0]},
+{id: 7, color: [238, 90, 36], weight: 1, xd: 0, yd: 0, pose:[2, 3, 0]},
 ]

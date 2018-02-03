@@ -147,7 +147,7 @@ class Voronoi:
         self.voronoi_publisher.publish(voro_tess)
 
     def tesselation_and_control_computation(self, list_robots=None):
-        tic()
+        begin = rospy.Time.now()
         if list_robots is None:
             list_robots = []
 
@@ -215,7 +215,8 @@ class Voronoi:
         self.publish_voronoi()
         self.adapt_weights()
         self.clear()
-        rospy.loginfo("Tesselation finished with iter=" + str(iterations) + " and " + str(toc()) + "s")
+        time_diff = (rospy.Time.now() - begin).to_sec()
+        rospy.loginfo("Finished! iter=" + str(iterations) + ",h = " + str(h_func) + ", " + str(time_diff) + "s")
         return h_func
 
     def robot_reached_goal(self, robot):
