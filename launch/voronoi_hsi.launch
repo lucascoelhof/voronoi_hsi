@@ -1,1 +1,9 @@
-<launch>    <include file="$(find voronoi_hsi)/launch/map_server.launch"/>    <include file="$(find voronoi_hsi)/launch/voronoi_params.launch"/>    <node name="image_view_tesselation" pkg="image_view" type="image_view" args="image:=/voronoi/tesselation" respawn="true" output = "screen"/>    <!--node name="stage" pkg="stage_ros" type="stageros" args="$(find voronoi_hsi)/worlds/four_voronoi.world" respawn="true" output = "screen"/-->    <node name="h_func_plot" pkg="rqt_plot" type="rqt_plot" args="/voronoi/h_func" />    <group ns="simulator">        <rosparam file="$(find voronoi_hsi)/launch/simulator.yaml" command="load" />    </group></launch>
+<launch>
+    <include file="$(find voronoi_hsi)/launch/map_server.launch"/>
+    <include file="$(find voronoi_hsi)/launch/voronoi_params.launch"/>
+    <node name="image_view_tesselation" pkg="image_view" type="image_view" args="image:=/voronoi/tesselation" respawn="true" output = "screen"/>
+    <node name="h_func_plot" pkg="rqt_plot" type="rqt_plot" args="/voronoi/h_func" />
+    <group ns="simulator">
+        <rosparam file="$(find voronoi_hsi)/launch/simulator.yaml" command="load" />
+    </group>
+</launch>

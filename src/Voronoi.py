@@ -1,4 +1,3 @@
-import sys
 import math
 import numpy as np
 from Queue import PriorityQueue
@@ -147,8 +146,10 @@ class Voronoi:
                 voro_tess.data[i*voro_tess.width + j] = self.graph.nodes[i, j].robot_id
         self.voronoi_publisher.publish(voro_tess)
 
-    def tesselation_and_control_computation(self):
-        tic()
+    def tesselation_and_control_computation(self, list_robots=None):
+        begin = rospy.Time.now()
+        if list_robots is None:
+            list_robots = []
 
         for robot in self.robots.values():  # type: Robot
             pose = robot.get_pose_array()
@@ -196,25 +197,32 @@ class Voronoi:
                     self.priority_queue.put((n.power_dist, n, robot.id))
 
         for robot in self.robots.values():  # type: Robot
-            # print("\n\nRobot " + str(robot.id))
-            control_integral = robot.control.control_law.get_control_integral()
-            # print("Control integral: " + str(control_integral))
-            robot_node = self.graph.get_node(robot.get_pose_array())
-            # self.mark_node(robot_node, self.robot_color)
-            best_node = self.get_best_aligned_node(control_integral, robot_node)  # type: Node
-            if best_node is None:
-                print("Best node is none robot_" + str(robot.id))
-                continue
-            else:
-                print("Goal: " + str(best_node.pose))
-                robot.control.set_goal(best_node.pose)
+            if robot.id in list_robots:
+                # print("\n\nRobot " + str(robot.id))
+                control_integral = robot.control.control_law.get_control_integral()
+                # print("Control integral: " + str(control_integral))
+                robot_node = self.graph.get_node(robot.get_pose_array())
+                # self.mark_node(robot_node, self.robot_color)
+                best_node = self.get_best_aligned_node(control_integral, robot_node)  # type: Node
+                if best_node is None:
+                    print("Best node is none robot_" + str(robot.id))
+                    continue
+                else:
+                    print("Goal: " + str(best_node.pose))
+                    robot.control.set_goal(best_node.pose)
 
         self.publish_tesselation_image()
         self.publish_voronoi()
         self.adapt_weights()
         self.clear()
-        rospy.loginfo("Tesselation finished with iter=" + str(iterations) + " and " + str(toc()) + "s")
+        time_diff = (rospy.Time.now() - begin).to_sec()
+        rospy.loginfo("Finished! iter=" + str(iterations) + ",h = " + str(h_func) + ", " + str(time_diff) + "s")
         return h_func
+
+    def robot_reached_goal(self, robot):
+        goal = self.graph.get_node(robot.control.goal)
+        node = self.graph.get_node(robot.pose)
+        return goal == node
 
     def adapt_weights(self):
         w_del_robots = []
@@ -234,7 +242,6 @@ class Voronoi:
         for robot, w_dot in zip(self.robots.values(), w_del_robots):
             robot.weight += w_dot
             robot.weight_publisher.publish(robot.weight)
-
 
     def k_func(self, kp, kdel):
         return np.linalg.norm(kp + kdel)/np.linalg.norm(kp)

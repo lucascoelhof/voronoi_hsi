@@ -55,17 +55,17 @@ window
 floorplan
 ( 
   name "willow"
-  bitmap "../launch/map.pgm"
+  bitmap "square800.pgm"
   size [20.000 20.000 0.500]
   pose [10.000 10.000 0.000 0.000]
 )
 
 # throw in two robots
 erratic( pose [ 2.100 3.666 0.000 180.000 ] name "robot0" color "firebrick")
-erratic( pose [ 5.477 2.166 0.000 180.000 ] name "robot1" color "gold")
-erratic( pose [ 3.200 6.600 0.000 180.000 ] name "robot2" color "steel blue")
-erratic( pose [ 6.227 5.650 0.000 180.000 ] name "robot3" color "sea green")
-erratic( pose [ 6.050 3.816 0.000 180.000 ] name "robot5" color "saddle brown")
-erratic( pose [ 3.277 2.266 0.000 180.000 ] name "robot6" color "purple3")
-erratic( pose [ 5.150 6.650 0.000 180.000 ] name "robot7" color "orange")
-erratic( pose [ 1.877 5.350 0.000 180.000 ] name "robot8" color "hot pink")
+erratic( pose [ 5.477 2.166 0.000 180.000 ] name "robot1" color "sea green")
+erratic( pose [ 3.200 6.600 0.000 180.000 ] name "robot2" color "royal blue")
+erratic( pose [ 6.227 5.650 0.000 180.000 ] name "robot3" color "gold")
+erratic( pose [ 6.050 3.816 0.000 180.000 ] name "robot5" color "blue violet")
+erratic( pose [ 3.277 2.266 0.000 180.000 ] name "robot6" color "aquamarine")
+erratic( pose [ 5.150 6.650 0.000 180.000 ] name "robot7" color "orange red")
+erratic( pose [ 1.877 5.350 0.000 180.000 ] name "robot8" color "pink")
