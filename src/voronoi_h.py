@@ -16,8 +16,8 @@ class VoronoiRunner(object):
         self.iterations = 0
 
     def main(self):
-        rospy.sleep(rospy.Duration.from_sec(2))
         rospy.loginfo("Starting Voronoi")
+        rospy.sleep(rospy.Duration.from_sec(5))
         list_robots = []
         for robot in self.voronoi.robots.values():
             list_robots.append(robot.id)

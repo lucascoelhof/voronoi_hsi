@@ -25,7 +25,6 @@ class Graph:
         service_map = rospy.ServiceProxy(service_map_name, GetMap)
         occ_g = service_map()
         self.set_occ_grid(occ_g.map)
-        self.build_graph()
 
     def occ_grid_callback(self, msg):
         # type: (OccupancyGrid) -> None
@@ -34,19 +33,16 @@ class Graph:
 
     def set_occ_grid(self, map_msg):
         # type: (OccupancyGrid) -> None
+        rospy.loginfo("Setting occupancy grid")
         self.width = map_msg.info.width/self.resize
         self.height = map_msg.info.height/self.resize
         self.resolution = map_msg.info.resolution*self.resize
-        self.occ_grid = np.mat(map_msg.data).reshape(map_msg.info.height, map_msg.info.width)  # type: np.array()
-        self.occ_grid = self.occ_grid.transpose()
-        resized_occ_grid = cv2.resize(self.occ_grid, dsize=(self.width*10, self.height*10), interpolation=cv2.INTER_NEAREST)
-        occ_grid = OccupancyGrid()
-        data_occ = (resized_occ_grid.transpose().flatten()).astype(int)
-        occ_grid.data = data_occ
-        occ_grid.info.width = self.width*10
-        occ_grid.info.height = self.height*10
-        occ_grid.info.resolution = self.resolution/10.0
-        self.map_publisher.publish(occ_grid)
+        self.occ_grid = self.build_occ_grid(map_msg)
+        self.build_graph()
+
+    def build_occ_grid(self, map_msg):
+        occ_grid = np.mat(map_msg.data).reshape(map_msg.info.height, map_msg.info.width)  # type: np.array()
+        return occ_grid.transpose()
 
     def get_node(self, pose):
         """
@@ -70,6 +66,12 @@ class Graph:
         xc = int(math.floor(p_arr[0] / self.resolution))
         yc = int(math.floor(p_arr[1] / self.resolution))
         return self.nodes[xc, yc]
+
+    def get_node_from_index(self, i, j):
+        if 0 <= i < self.width and 0 <= j < self.height:
+            return self.nodes[i, j]
+        else:
+            return None
 
     def build_graph(self):
         """
