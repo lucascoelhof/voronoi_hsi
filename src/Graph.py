@@ -24,9 +24,9 @@ class Graph:
 
         self.resize = rospy.get_param("/voronoi/topic_info/occ_grid_resize", 1)
 
-        #service_map = rospy.ServiceProxy(service_map_name, GetMap)
-        #occ_g = service_map()
-        #self.set_occ_grid(occ_g.map)
+        service_map = rospy.ServiceProxy(service_map_name, GetMap)
+        occ_g = service_map()
+        self.set_occ_grid(occ_g.map)
 
     def occ_grid_callback(self, msg):
         # type: (OccupancyGrid) -> None
@@ -34,6 +34,7 @@ class Graph:
 
     def set_occ_grid(self, map_msg):
         # type: (OccupancyGrid) -> None
+        rospy.loginfo("Setting occupancy grid")
         self.width = map_msg.info.width/self.resize
         self.height = map_msg.info.height/self.resize
         self.resolution = map_msg.info.resolution*self.resize

@@ -1,0 +1,5 @@
+<launch>
+    <arg name="real_robot" default="false"/>
+    <include file="$(find voronoi_hsi)/launch/voronoi_4.launch" pass_all_args="true"/>
+    <node name="voronoi_node" pkg="voronoi_hsi" type="voronoi_h.py" output="screen"/>
+</launch>

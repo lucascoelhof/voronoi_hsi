@@ -4,6 +4,7 @@ import random
 from Queue import PriorityQueue
 
 import rospy
+import time
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid
 from sensor_msgs.msg import Image
@@ -60,7 +61,6 @@ class Voronoi:
         self.img_height = 0
         self.robot_color = [50, 50, 50]
 
-
         self.init_density_dist()
         self.init_tesselation_image()
 
@@ -71,11 +71,17 @@ class Voronoi:
         self.density_sub = rospy.Subscriber(self.topic_info["gaussian_topic"], Gaussian, self.density_callback)
 
     def init_tesselation_image(self):
-        occ_grid_service = rospy.ServiceProxy(self.topic_info["occupancy_grid_service"], GetMap)
-        occ_grid = occ_grid_service().map
-        self.occ_grid_callback(occ_grid)
+        while self.graph.occ_grid is None:
+            time.sleep(0.2)
+        self.img_width = self.graph.width
+        self.img_height = self.graph.height
+        self.grey_img = np.mat(self.graph.occ_grid)
+        self.set_image()
+        self.clear_image()
 
     def create_obstacle(self, node):
+        # type: (Node) -> None
+        rospy.loginfo("Creating obstacle at " + str(node.pose.x) + ":" + str(node.pose.y))
         id = self.obstacle_id
         self.obstacle_id += 1
         color = [150, 150, 150]
@@ -85,18 +91,22 @@ class Voronoi:
 
     def occ_grid_callback(self, msg):
         # type: (OccupancyGrid) -> None
+        rospy.loginfo("Received new occ_grid image")
         new_occ_grid = self.graph.build_occ_grid(msg)
+        is_different = False
         if self.graph.occ_grid is not None:
             for i in range(msg.info.width):
                 for j in range(msg.info.height):
-                    if new_occ_grid[i, j] != self.graph.occ_grid[i, j]:
+                    if new_occ_grid[i, j] != self.graph.occ_grid[i, j] and new_occ_grid[i, j] > 50:
+                        is_different = True
                         self.create_obstacle(self.graph.get_node_from_index(i, j))
 
-        self.graph.set_occ_grid(msg)
-        self.img_width = msg.info.width
-        self.img_height = msg.info.height
-        self.grey_img = np.mat(self.graph.occ_grid)
-        self.clear_image()
+        if is_different:
+            self.graph.set_occ_grid(msg)
+            self.img_width = msg.info.width
+            self.img_height = msg.info.height
+            self.grey_img = np.mat(self.graph.occ_grid)
+            self.set_image()
 
     @staticmethod
     def occ_grid_to_img(occ_grid):
@@ -109,11 +119,13 @@ class Voronoi:
                 i = 170
         return image
 
-    def clear_image(self):
+    def set_image(self):
         self.base_image = np.empty((self.img_width, self.img_height, 3), dtype=np.uint8)
         self.base_image[:, :, 0] = self.grey_img
         self.base_image[:, :, 1] = self.grey_img
         self.base_image[:, :, 2] = self.grey_img
+
+    def clear_image(self):
         self.tesselation_image = np.copy(self.base_image)
 
     def update_density_dist(self):
@@ -224,10 +236,9 @@ class Voronoi:
                 # self.mark_node(robot_node, self.robot_color)
                 best_node = self.get_best_aligned_node(control_integral, robot_node)  # type: Node
                 if best_node is None:
-                    print("Best node is none robot_" + str(robot.id))
+                    rospy.logerr("Best node is none robot_" + str(robot.id))
                     continue
                 else:
-                    print("Goal: " + str(best_node.pose))
                     robot.control.set_goal(best_node.pose)
 
         self.publish_tesselation_image()
@@ -291,7 +302,7 @@ class Voronoi:
 
     def clear(self):
         self.graph.clear_graph()
-        self.tesselation_image = np.copy(self.base_image)
+        self.clear_image()
         for robot in self.robots.values():  # type: Robot
             robot.clear()
 
