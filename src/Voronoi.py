@@ -103,9 +103,11 @@ class Voronoi:
         if self.graph.occ_grid is not None:
             for i in range(msg.info.width):
                 for j in range(msg.info.height):
-                    if new_occ_grid[i, j] != self.graph.occ_grid[i, j] and new_occ_grid[i, j] > 50:
+                    if new_occ_grid[i, j] != self.graph.occ_grid[i, j]:
                         is_different = True
-                        # self.create_obstacle(self.graph.get_node_from_index(i, j))
+                        if new_occ_grid[i, j] > 50:
+                            # self.create_obstacle(self.graph.get_node_from_index(i, j))
+                            pass
 
         if is_different:
             self.graph.set_occ_grid(msg)
