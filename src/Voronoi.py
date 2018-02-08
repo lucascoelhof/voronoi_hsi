@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import random
+from threading import Semaphore
 from Queue import PriorityQueue
 
 import rospy
@@ -34,7 +35,7 @@ class Voronoi:
         self.base_image = None
         self.tesselation_image = None
         self.tesselation_image_pub = None  # type: rospy.Publisher
-        self.voronoi_publisher = rospy.Publisher("/voronoi/voronoi_tesselation", VoronoiTesselation, queue_size=1)
+        self.semaphore = Semaphore()
 
         self.priority_queue = PriorityQueue()
 
@@ -54,6 +55,7 @@ class Voronoi:
         self.obstacle_id = self.obstacle_id_start
 
         self.graph = Graph(self.topic_info["occupancy_grid_service"], self.topic_info["occupancy_grid_topic"])
+        self.occ_grid_seq = 0
 
         self.occ_grid_subscriber = rospy.Subscriber(self.topic_info["occupancy_grid_topic"], OccupancyGrid, self.occ_grid_callback)
         self.grey_img = None
@@ -68,7 +70,7 @@ class Voronoi:
         if self.graph is None:
             raise ValueError("Graph is None or not initialized, can't initiate density distribuition")
         self.update_density_dist()
-        self.density_sub = rospy.Subscriber(self.topic_info["gaussian_topic"], Gaussian, self.density_callback)
+        self.density_sub = rospy.Subscriber(self.topic_info["gaussian_topic"], Gaussian, self.density_callback, queue_size=1)
 
     def init_tesselation_image(self):
         while self.graph.occ_grid is None:
@@ -91,6 +93,10 @@ class Voronoi:
 
     def occ_grid_callback(self, msg):
         # type: (OccupancyGrid) -> None
+        if self.occ_grid_seq == 0:
+            self.occ_grid_seq = 1
+            return
+        self.semaphore.acquire()
         rospy.loginfo("Received new occ_grid image")
         new_occ_grid = self.graph.build_occ_grid(msg)
         is_different = False
@@ -99,7 +105,7 @@ class Voronoi:
                 for j in range(msg.info.height):
                     if new_occ_grid[i, j] != self.graph.occ_grid[i, j] and new_occ_grid[i, j] > 50:
                         is_different = True
-                        self.create_obstacle(self.graph.get_node_from_index(i, j))
+                        # self.create_obstacle(self.graph.get_node_from_index(i, j))
 
         if is_different:
             self.graph.set_occ_grid(msg)
@@ -107,6 +113,7 @@ class Voronoi:
             self.img_height = msg.info.height
             self.grey_img = np.mat(self.graph.occ_grid)
             self.set_image()
+        self.semaphore.release()
 
     @staticmethod
     def occ_grid_to_img(occ_grid):
@@ -129,28 +136,35 @@ class Voronoi:
         self.tesselation_image = np.copy(self.base_image)
 
     def update_density_dist(self):
+        self.semaphore.acquire()
         self.density = np.ones((self.graph.width, self.graph.height))
         for i in range(self.graph.width):
             for j in range(self.graph.height):
-                pose = self.graph.nodes[i][j].pose  # type: list
-                val = self.gaussian2d(self.gaussian, pose[0], pose[1])
-                self.density[i, j] = val
+                n = self.graph.nodes[i, j]
+                if n is not None:
+                    pose = self.graph.nodes[i, j].pose  # type: list
+                    val = self.gaussian2d(self.gaussian, pose[0], pose[1])
+                    self.density[i, j] = val
+                else:
+                    self.density[i, j] = 0
+        np.savetxt("/home/lady/density.txt", self.density, newline="\n")
+        rospy.loginfo("Density updated with a: {0}; x: {1}; y: {2}".format(str(self.gaussian.a), str(self.gaussian.x_c), str(self.gaussian.y_c)))
+        self.semaphore.release()
 
     @staticmethod
     def gaussian2d(gaussian, x, y):
         # type: (Gaussian, float, float) -> float
         x_part = math.pow(x - gaussian.x_c, 2) / (2 * math.pow(gaussian.sigma_x, 2))
         y_part = math.pow(y - gaussian.y_c, 2) / (2 * math.pow(gaussian.sigma_y, 2))
-        return gaussian.a * math.exp(-(x_part + y_part)) + 1
+        return gaussian.a * math.exp(-(x_part + y_part))
 
     def density_callback(self, msg):
         # type: (Gaussian) -> None
         try:
             self.gaussian = msg
             self.update_density_dist()
-        except:
-            rospy.logerr("Error while getting density info")
-            pass
+        except Exception as e:
+            rospy.logerr("Error while getting density info " + str(e))
 
     def set_robot_subscribers(self):
         for robot in self.robots.values():
@@ -179,6 +193,7 @@ class Voronoi:
 
     def tesselation_and_control_computation(self, list_robots=None):
         begin = rospy.Time.now()
+        self.semaphore.acquire()
         if list_robots is None:
             list_robots = []
 
@@ -242,11 +257,11 @@ class Voronoi:
                     robot.control.set_goal(best_node.pose)
 
         self.publish_tesselation_image()
-        self.publish_voronoi()
         self.adapt_weights()
         self.clear()
         time_diff = (rospy.Time.now() - begin).to_sec()
         rospy.loginfo("Finished! iter=" + str(iterations) + ",h = " + str(h_func) + ", " + str(time_diff) + "s")
+        self.semaphore.release()
         return h_func
 
     def robot_reached_goal(self, robot):
