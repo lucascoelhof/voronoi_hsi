@@ -81,14 +81,18 @@ class Voronoi:
         self.set_image()
         self.clear_image()
 
-    def create_obstacle(self, node):
-        # type: (Node) -> None
-        rospy.loginfo("Creating obstacle at " + str(node.pose.x) + ":" + str(node.pose.y))
-        id = self.obstacle_id
+    def create_obstacle(self, i, j):
+        # type: (int, int) -> None
+        node = self.graph.get_node_from_index(i, j)
+        if node is None:
+            rospy.logwarn("Node is none! [{0}, {1}]".format(str(i), str(j)))
+        rospy.logwarn("Creating obstacle at " + str(node.pose[0]) + ":" + str(node.pose[1]))
         self.obstacle_id += 1
+        id = self.obstacle_id
         color = [150, 150, 150]
-        obst = Robot(id, 0.5, color, xd=1, yd=1)
-        obst.control.control_law = ControlLawVoronoi()
+        obst = Robot(id, 0.2, color, xd=0.5, yd=0.5)
+        obst.set_pose(node.pose)
+        obst.control.control_law = ControlLawVoronoi(kv=0.1)
         self.robots[id] = obst
 
     def occ_grid_callback(self, msg):
@@ -104,10 +108,11 @@ class Voronoi:
             for i in range(msg.info.width):
                 for j in range(msg.info.height):
                     if new_occ_grid[i, j] != self.graph.occ_grid[i, j]:
-                        is_different = True
                         if new_occ_grid[i, j] > 50:
-                            # self.create_obstacle(self.graph.get_node_from_index(i, j))
-                            pass
+                            self.create_obstacle(i, j)
+                            new_occ_grid[i, j] = 0
+                        else:
+                            is_different = True
 
         if is_different:
             self.graph.set_occ_grid(msg)
@@ -181,7 +186,7 @@ class Voronoi:
     @staticmethod
     def power_dist(x, r):
         # type: (float, float) -> float
-        return pow(x, 2) - pow(r, 2)
+        return pow(x, 2) - math.fabs(r)/r*pow(r, 2)
 
     def publish_voronoi(self):
         voro_tess = VoronoiTesselation()
@@ -191,7 +196,7 @@ class Voronoi:
         for i in range(0, self.graph.width):
             for j in range(0, self.graph.height):
                 voro_tess.data[i*voro_tess.width + j] = self.graph.nodes[i, j].robot_id
-        self.voronoi_publisher.publish(voro_tess)
+        #self.voronoi_publisher.publish(voro_tess)
 
     def tesselation_and_control_computation(self, list_robots=None):
         begin = rospy.Time.now()
@@ -200,11 +205,13 @@ class Voronoi:
             list_robots = []
 
         for robot in self.robots.values():  # type: Robot
+
             pose = robot.get_pose_array()
             node = self.graph.get_node(pose)  # type: Node
             node.cost = 0  # np.linalg.norm(np.subtract(node.pose, robot.get_pose_array()))
             node.power_dist = node.cost - pow(robot.weight, 2)
             robot.control.control_law.clear_i()
+            #robot.mass = self.get_density(node)*math.pow(self.graph.resolution, 2)
             self.priority_queue.put((node.power_dist, node, robot.id))
 
             for q in node.neighbors:  # type: Node
@@ -234,7 +241,7 @@ class Voronoi:
                 i_cl = self.get_density(q) * q.cost * np.subtract(q.s.pose, robot.get_pose_array())
                 robot.control.control_law.add_control_law(i_cl)
 
-            for n in q.neighbors:
+            for n in q.neighbors:  # type: Node
                 _cost = q.cost + np.linalg.norm(np.subtract(q.pose, n.pose))
                 _power_dist = self.power_dist(_cost, robot.weight)
                 if _power_dist < n.power_dist:
@@ -243,6 +250,10 @@ class Voronoi:
                     if not n.is_neighbor(robot_node):
                         n.s = q.s
                     self.priority_queue.put((n.power_dist, n, robot.id))
+                else:
+                    if n.robot_id is not -1:
+                        robot.neighbors[n.robot_id] = self.robots[n.robot_id]
+                        self.robots[n.robot_id].neighbors[robot.id] = robot
 
         for robot in self.robots.values():  # type: Robot
             if robot.id in list_robots:
@@ -279,23 +290,41 @@ class Voronoi:
             Kp = robot.control.get_kp()
             Kdel = robot.get_kdel()
             diff_sum = 0
-            for robot_neigh in self.robots.values():  # type: Robot
-                if robot_neigh.id > self.obstacle_id_start:
+            if robot.id >= self.obstacle_id_start:
+                rospy.logerr("Obstacle id= " + str(robot.id) + " weight: " + str(robot.weight))
+
+            for robot_neigh in robot.neighbors.values():  # type: Robot
+                if robot_neigh.id >= self.obstacle_id_start:
                     continue
                 kdel_neigh = robot_neigh.get_kdel()
                 kp_neigh = robot_neigh.control.get_kp()
                 if robot is robot_neigh:
                     continue
                 diff_sum += (robot.weight - self.k_func(Kp, Kdel)) - (robot_neigh.weight - self.k_func(kp_neigh, kdel_neigh))
-            w_del = - self.adapting_weight_constant / robot.mass * diff_sum * self.loop_time
+            try:
+                w_del = - self.adapting_weight_constant / robot.mass * diff_sum * self.loop_time
+            except ZeroDivisionError:
+                w_del = - 1000
+                rospy.logerr("Zero division on adjusting weight of robot id=" + str(robot.id))
             w_del_robots.append(w_del)
 
-        for robot, w_dot in zip(self.robots.values(), w_del_robots):
-            robot.weight += w_dot
+        for robot, w_dot in zip(self.robots.values(), w_del_robots):  # type: (Robot, float)
+            if robot.id >= self.obstacle_id_start:
+                rospy.loginfo("wdel= " + str(w_dot))
+                robot.weight = robot.weight - math.fabs(w_dot)
+            else:
+                robot.weight += w_dot
             robot.weight_publisher.publish(robot.weight)
-            if robot.weight < 0.2:
+            node = self.graph.get_node(robot.get_pose_array())
+            mass = self.get_density(node)*math.pow(self.graph.resolution, 2)
+            if robot.weight < -100 or robot.mass <= mass*2:
                 del self.robots[robot.id]
-                print("Removed robot " + robot.id)
+                if robot.id >= self.obstacle_id_start:
+                    self.graph.occ_grid[node.indexes[0], node.indexes[1]] = 100
+                    self.graph.build_graph()
+                    self.init_tesselation_image()
+                rospy.logerr("Removed robot {0} w={1}".format(str(robot.id), robot.weight))
+
 
     def k_func(self, kp, kdel):
         return np.linalg.norm(kp + kdel)/np.linalg.norm(kp)
@@ -327,7 +356,7 @@ class Voronoi:
         # type: (Node, Robot) -> None
         coord = node.indexes
         self.tesselation_image[coord[0], coord[1]] = robot.color
-        robot.mass += self.get_density(node)
+        robot.mass += self.get_density(node)*math.pow(self.graph.resolution, 2)
 
     def publish_tesselation_image(self):
         if self.tesselation_image_pub is None:

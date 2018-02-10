@@ -27,6 +27,7 @@ class Robot:
         self.mass = 0
         self.xd = xd
         self.yd = yd
+        self.neighbors = {}
 
         self.weight_publisher = rospy.Publisher("/voronoi/robot_" + str(self.id) + "/weight", Float64, queue_size=1)
 
@@ -89,11 +90,14 @@ class Robot:
 
     def set_pose(self, arr):
         # type: (list) -> None
+        if self.pose is None:
+            self.pose = Pose()
         self.pose.position.x = arr[0]
         self.pose.position.y = arr[1]
 
     def clear(self):
         self.mass = 0
+        self.neighbors = {}
 
     def get_kdel(self):
         return np.matrix([[self.xd, self.yd], [self.xd, self.yd]])

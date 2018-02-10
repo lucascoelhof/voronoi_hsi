@@ -41,6 +41,7 @@ class Graph:
         self.resolution = map_msg.info.resolution*self.resize
         self.occ_grid = self.build_occ_grid(map_msg)
         self.build_graph()
+        rospy.logwarn("Occupancy grid updated!")
         self.semaphore.release()
 
     def build_occ_grid(self, map_msg):
@@ -71,6 +72,7 @@ class Graph:
         return self.nodes[xc, yc]
 
     def get_node_from_index(self, i, j):
+        # type: (int, int) -> Node
         if 0 <= i < self.width and 0 <= j < self.height:
             return self.nodes[i, j]
         else:
@@ -113,7 +115,7 @@ class Graph:
                             else:
                                 self.nodes[i, j].obstacle_neighbors.append(n)
                     if len(self.nodes[i, j].neighbors) > 8:
-                        print("more neighbors than it should")
+                        rospy.loginfo("more neighbors than it should")
 
     def get_pose(self, i, j):
         """

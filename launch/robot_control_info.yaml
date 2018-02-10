@@ -2,5 +2,5 @@ robot_control_info: {
   kw: 2,
   kv: 2,
   d: 0.01,
-  kd: 5
+  kd: 1
 }
