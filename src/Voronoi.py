@@ -17,6 +17,7 @@ from Graph import Graph
 from Robot import Robot
 from Util import tic, toc
 from ControlLaw import ControlLawVoronoi
+from voronoi_hsi.msg import RobotGainArray, RobotGain
 
 
 class Voronoi:
@@ -58,6 +59,7 @@ class Voronoi:
         self.occ_grid_seq = 0
 
         self.occ_grid_subscriber = rospy.Subscriber(self.topic_info["occupancy_grid_topic"], OccupancyGrid, self.occ_grid_callback)
+        self.robot_gain_subscriber = rospy.Subscriber(self.topic_info["robot_gains"], RobotGainArray, self.robot_gains_callback)
         self.grey_img = None
         self.img_width = 0
         self.img_height = 0
@@ -424,3 +426,14 @@ class Voronoi:
 
     def image_builder(self):
         raise NotImplementedError("image_builder not implemented yet")
+
+    def robot_gains_callback(self, msg):
+        # type: (RobotGainArray) -> None
+
+        # we don't want gains changing in the middle of a tesselation.
+        self.semaphore.acquire()
+        for gain in msg.robot_gain_list:  # type: RobotGain
+            if gain.id in self.robots:
+                control_law = self.robots[gain.id].control.control_law  # type: ControlLawVoronoi
+                control_law.set_control_parameters(kv=gain.kp, d=control_law.d, kw=control_law.kw)
+        self.semaphore.release()

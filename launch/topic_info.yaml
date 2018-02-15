@@ -8,5 +8,6 @@ topic_info: {
   density_topic: "/voronoi/density_dist",
   tesselation_topic: "/voronoi/tesselation",
   occ_grid_resize: 1,
-  gaussian_topic: "/voronoi/gaussian_info"
+  gaussian_topic: "/voronoi/gaussian_info",
+  robot_gains: "/voronoi/robot_gains"
 }

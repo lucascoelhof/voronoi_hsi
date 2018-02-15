@@ -8,7 +8,6 @@ from nav_msgs.srv import GetMap, GetMapResponse
 
 from Util import Rate
 from voronoi_hsi.msg import Gaussian
-from voronoi_hsi.msg import Matrix2D
 
 
 class DensityPublisher(Thread):
@@ -52,7 +51,7 @@ class DensityPublisher(Thread):
         self.gaussian.sigma_x = 1
         self.gaussian.sigma_y = 1
 
-        self.density = Matrix2D()
+        #self.density = Matrix2D()
         self.loop_rate = Rate(1)
 
         rospy.init_node('density', anonymous=True)
@@ -68,9 +67,9 @@ class DensityPublisher(Thread):
         self.height = int(math.ceil(occ_g.map.info.height/float(self.resize)))
         self.width = int(math.ceil(occ_g.map.info.width/float(self.resize)))
         self.resolution = occ_g.map.info.resolution*self.resize
-        self.density.width = self.width
-        self.density.height = self.height
-        self.density.data = np.zeros((self.width*self.height, 1))
+        #self.density.width = self.width
+        #self.density.height = self.height
+        #self.density.data = np.zeros((self.width*self.height, 1))
 
         self.start()
 

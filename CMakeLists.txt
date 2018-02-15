@@ -15,12 +15,13 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
- add_message_files(
+add_message_files(
    FILES
    GaussianArray.msg
    Gaussian.msg
-   Matrix2D.msg
    VoronoiTesselation.msg
+   RobotGain.msg
+   RobotGainArray.msg
 )
 
 add_service_files(
@@ -32,7 +33,7 @@ add_service_files(
    RemoveRobot.srv
  )
 
- generate_messages(
+generate_messages(
    DEPENDENCIES
    std_msgs
    geometry_msgs
