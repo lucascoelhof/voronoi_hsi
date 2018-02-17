@@ -43,7 +43,6 @@ generate_messages(
 
 
 catkin_package(
-  INCLUDE_DIRS include
   LIBRARIES voronoi_hsi
   CATKIN_DEPENDS cv_bridge geometry_msgs image_transport nav_msgs sensor_msgs std_msgs tf message_runtime
   DEPENDS system_lib
