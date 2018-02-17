@@ -1,0 +1,29 @@
+<launch>
+
+	<arg name="epuck_robot_3" value="10:00:E8:6C:D7:BD"/>	
+
+
+	<param name="robot_description" textfile="$(find epuck_driver)/urdf/epuck_urdf.xml"/>
+
+	<group ns="epuck_robot_3">
+		<include file="$(find epuck_driver)/launch/epuck_controller.launch">
+			<arg name="epuck_address" value="$(arg epuck_robot_3)"/>
+			<arg name="epuck_name" value="epuck_robot_3"/>
+			<arg name="cam_en" value="false"/>
+    		<arg name="acc_en" value="false"/>
+    		<arg name="prox_en" value="true"/>
+			<arg name="mot_pos_en" value="true"/>
+			<arg name="light_en" value="false"/>
+			<arg name="floor_en" value="false"/>
+			<arg name="sel_en" value="false"/> <!--this command is available only in ascii mode-->
+			<arg name="mot_speed_en" value="false"/>
+			<arg name="mic_en" value="false"/>
+			<arg name="xpos" value="-0.1"/>
+			<arg name="ypos" value="0.1"/>
+			<arg name="theta" value="0.0"/>
+			<arg name="is_single_robot" value="0"/>
+		</include>
+		<!--<node pkg="tf" type="static_transform_publisher" name="epuck_robot_3_tf" args="0 0 0 0 0 0 /base_link /epuck_robot_3/base_link 30"/>-->
+	</group>
+
+</launch>

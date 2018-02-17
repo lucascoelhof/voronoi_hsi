@@ -5,8 +5,16 @@
         <node name="stage" pkg="stage_ros" type="stageros" args="$(find voronoi_hsi)/worlds/eight_voronoi.world"/>
     </group>
     <group if="$(arg real_robot)">
-        <!-- here goes real robot related stuff, like ar track, epuck launch files and so on -->
+        <param name="/use_sim_time" value="false"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck_0.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck_1.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck_2.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck_3.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck_4.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck_5.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck_6.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck_7.launch"/>
     </group>
     <include file="$(find voronoi_hsi)/launch/voronoi_params8.launch"/>
-    <include file="$(find voronoi_hsi)/launch/voronoi_common.launch"/>
+    <include file="$(find voronoi_hsi)/launch/voronoi_common.launch" pass_all_args="true"/>
 </launch>

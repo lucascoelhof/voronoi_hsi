@@ -52,6 +52,7 @@ catkin_package(
 install(PROGRAMS
    src/voronoi_h.py
    src/image_service.py
+   src/ar_track_to_odom.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

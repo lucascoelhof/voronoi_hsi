@@ -1,0 +1,7 @@
+<launch>
+    <group ns = "voronoi">
+        <rosparam file="$(find voronoi_hsi)/launch/topic_info.yaml" command="load" />
+        <rosparam file="$(find voronoi_hsi)/launch/three_robots.yaml" command="load" />
+        <rosparam file="$(find voronoi_hsi)/launch/robot_control_info.yaml" command="load" />
+    </group>
+</launch>
