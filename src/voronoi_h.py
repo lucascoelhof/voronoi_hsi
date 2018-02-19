@@ -10,7 +10,7 @@ class VoronoiRunner(object):
 
     def __init__(self):
         rospy.init_node('voronoi')
-        self.loop_time = 1
+        self.loop_time = 0.5
         self.h_pub = rospy.Publisher("/voronoi/h_func", Float64, queue_size=1)
         self.voronoi = Voronoi(self.loop_time)
         self.iterations = 0

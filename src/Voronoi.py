@@ -46,7 +46,7 @@ class Voronoi:
         self.set_output_publishers()
 
         self.gaussian = Gaussian()
-        self.gaussian.a = 1
+        self.gaussian.a = 0
         self.gaussian.x_c = 10
         self.gaussian.y_c = 10
         self.gaussian.sigma_x = 999999999999
@@ -156,8 +156,8 @@ class Voronoi:
                     self.density[i, j] = val
                 else:
                     self.density[i, j] = 0
-        np.savetxt("/home/lady/density.txt", self.density, newline="\n")
-        rospy.loginfo("Density updated with a: {0}; x: {1}; y: {2}".format(str(self.gaussian.a), str(self.gaussian.x_c), str(self.gaussian.y_c)))
+        #np.savetxt("/home/lady/density.txt", self.density, newline="\n")
+        rospy.logwarn("Density updated with a: {0}; x: {1}; y: {2}".format(str(self.gaussian.a), str(self.gaussian.x_c), str(self.gaussian.y_c)))
         self.semaphore.release()
 
     @staticmethod
@@ -165,7 +165,7 @@ class Voronoi:
         # type: (Gaussian, float, float) -> float
         x_part = math.pow(x - gaussian.x_c, 2) / (2 * math.pow(gaussian.sigma_x, 2))
         y_part = math.pow(y - gaussian.y_c, 2) / (2 * math.pow(gaussian.sigma_y, 2))
-        return gaussian.a * math.exp(-(x_part + y_part))
+        return 10*gaussian.a * math.exp(-(x_part + y_part)) + 1
 
     def density_callback(self, msg):
         # type: (Gaussian) -> None
@@ -317,6 +317,7 @@ class Voronoi:
             else:
                 robot.weight += w_dot
             robot.weight_publisher.publish(robot.weight)
+            robot.weight_publisher_str.publish(str(robot.weight))
             node = self.graph.get_node(robot.get_pose_array())
             mass = self.get_density(node)*math.pow(self.graph.resolution, 2)
             if robot.weight < -100 or robot.mass <= mass*2:
