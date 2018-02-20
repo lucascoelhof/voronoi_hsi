@@ -52,6 +52,10 @@ class RobotControl(Thread):
                 speed_msg = Twist()
                 speed_msg.linear.x = v
                 speed_msg.angular.z = w
+                speed = Twist()
+                speed.linear.x = 0
+                speed.angular.z = 0
+                self.speed_pub.publish(speed)
                 self.speed_pub.publish(speed_msg)
 
     def get_kp(self):

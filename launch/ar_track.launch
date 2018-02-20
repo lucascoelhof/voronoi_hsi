@@ -1,6 +1,6 @@
 <launch>
 	<node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
-    	<param name="video_device" value="/dev/video0" />
+    	<param name="video_device" value="/dev/video1" />
     	<param name="image_width" value="640" />
     	<param name="image_height" value="480" />
     	<param name="pixel_format" value="yuyv" />
@@ -26,5 +26,8 @@
 		<remap from="camera_image"  to="$(arg cam_image_topic)" />
 		<remap from="camera_info"   to="$(arg cam_info_topic)" />
 	</node>
+
+	<node name="ar_track_bridge" pkg="voronoi_hsi" type="ar_track_to_odom.py" respawn="true" output = "screen"/>
+
 
 </launch>

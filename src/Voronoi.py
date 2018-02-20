@@ -156,7 +156,7 @@ class Voronoi:
                     self.density[i, j] = val
                 else:
                     self.density[i, j] = 0
-        np.savetxt("/home/lady/density.txt", self.density, newline="\n")
+        #np.savetxt("/home/lady/density.txt", self.density, newline="\n")
         rospy.loginfo("Density updated with a: {0}; x: {1}; y: {2}".format(str(self.gaussian.a), str(self.gaussian.x_c), str(self.gaussian.y_c)))
         self.semaphore.release()
 
@@ -319,7 +319,7 @@ class Voronoi:
             robot.weight_publisher.publish(robot.weight)
             node = self.graph.get_node(robot.get_pose_array())
             mass = self.get_density(node)*math.pow(self.graph.resolution, 2)
-            if robot.weight < -100 or robot.mass <= mass*2:
+            if robot.weight < -100 or robot.mass <= mass*2 and robot.id >= self.obstacle_id_start:
                 del self.robots[robot.id]
                 if robot.id >= self.obstacle_id_start:
                     self.graph.occ_grid[node.indexes[0], node.indexes[1]] = 100
