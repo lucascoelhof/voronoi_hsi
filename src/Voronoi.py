@@ -46,7 +46,7 @@ class Voronoi:
         self.set_output_publishers()
 
         self.gaussian = Gaussian()
-        self.gaussian.a = 0
+        self.gaussian.a = 1
         self.gaussian.x_c = 10
         self.gaussian.y_c = 10
         self.gaussian.sigma_x = 999999999999
@@ -165,7 +165,7 @@ class Voronoi:
         # type: (Gaussian, float, float) -> float
         x_part = math.pow(x - gaussian.x_c, 2) / (2 * math.pow(gaussian.sigma_x, 2))
         y_part = math.pow(y - gaussian.y_c, 2) / (2 * math.pow(gaussian.sigma_y, 2))
-        return 10*gaussian.a * math.exp(-(x_part + y_part)) + 1
+        return gaussian.a * math.exp(-(x_part + y_part))
 
     def density_callback(self, msg):
         # type: (Gaussian) -> None
@@ -435,6 +435,7 @@ class Voronoi:
         self.semaphore.acquire()
         for gain in msg.robot_gain_list:  # type: RobotGain
             if gain.id in self.robots:
+                rospy.logwarn("Weight of robot {0} has changed".format(gain.id))
                 control_law = self.robots[gain.id].control.control_law  # type: ControlLawVoronoi
                 control_law.set_control_parameters(kv=gain.kp, d=control_law.d, kw=control_law.kw)
         self.semaphore.release()
