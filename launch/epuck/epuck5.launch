@@ -4,10 +4,10 @@
 
 	<param name="robot_description" textfile="$(find epuck_driver)/urdf/epuck_urdf.xml"/>
 
-	<group ns="epuck_robot_5">
+	<group>
 		<include file="$(find epuck_driver)/launch/epuck_controller.launch">
 			<arg name="epuck_address" value="$(arg epuck_robot_5)"/>
-			<arg name="epuck_name" value="epuck_robot_5"/>
+			<arg name="epuck_name" value="robot_5"/>
 			<arg name="cam_en" value="false"/>
     		<arg name="acc_en" value="false"/>
     		<arg name="prox_en" value="true"/>
