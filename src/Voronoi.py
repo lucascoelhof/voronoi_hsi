@@ -165,7 +165,7 @@ class Voronoi:
         # type: (Gaussian, float, float) -> float
         x_part = math.pow(x - gaussian.x_c, 2) / (2 * math.pow(gaussian.sigma_x, 2))
         y_part = math.pow(y - gaussian.y_c, 2) / (2 * math.pow(gaussian.sigma_y, 2))
-        return gaussian.a * math.exp(-(x_part + y_part))
+        return gaussian.a * math.exp(-(x_part + y_part)) + 0.1
 
     def density_callback(self, msg):
         # type: (Gaussian) -> None
