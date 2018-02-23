@@ -23,7 +23,7 @@ class DensityPublisher(Thread):
         if self.density and self.gaussian is not None:
             self.density_pub.publish(self.density)
             density_data = np.reshape(self.density.data, (self.height, self.width))
-            np.savetxt("/home/lucas/test/density.txt", density_data, newline="\n")
+            #np.savetxt("/home/lucas/test/density.txt", density_data, newline="\n")
             print("Saved.")
 
     def gaussian_callback(self, msg):

@@ -28,9 +28,9 @@ class VoronoiRunner(object):
     def loop(self, event):
         list_robots = []
         for robot in self.voronoi.robots.values():
-            if self.voronoi.robot_reached_goal(robot):
-                list_robots.append(robot.id)
-                rospy.loginfo("Robot " + str(robot.id) + " has reached goal")
+            #if self.voronoi.robot_reached_goal(robot):
+            list_robots.append(robot.id)
+            rospy.loginfo("Robot " + str(robot.id) + " has reached goal")
         if list_robots:
             h = self.voronoi.tesselation_and_control_computation(list_robots)
             self.h_pub.publish(h)

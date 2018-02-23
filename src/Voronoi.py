@@ -111,8 +111,9 @@ class Voronoi:
                 for j in range(msg.info.height):
                     if new_occ_grid[i, j] != self.graph.occ_grid[i, j]:
                         if new_occ_grid[i, j] > 50:
-                            self.create_obstacle(i, j)
-                            new_occ_grid[i, j] = 0
+                            # self.create_obstacle(i, j)
+                            # new_occ_grid[i, j] = 0
+                            is_different = True
                         else:
                             is_different = True
 
@@ -157,7 +158,7 @@ class Voronoi:
                 else:
                     self.density[i, j] = 0
         #np.savetxt("/home/lady/density.txt", self.density, newline="\n")
-        rospy.logwarn("Density updated with a: {0}; x: {1}; y: {2}".format(str(self.gaussian.a), str(self.gaussian.x_c), str(self.gaussian.y_c)))
+        rospy.loginfo("Density updated with a: {0}; x: {1}; y: {2}".format(str(self.gaussian.a), str(self.gaussian.x_c), str(self.gaussian.y_c)))
         self.semaphore.release()
 
     @staticmethod
@@ -165,7 +166,7 @@ class Voronoi:
         # type: (Gaussian, float, float) -> float
         x_part = math.pow(x - gaussian.x_c, 2) / (2 * math.pow(gaussian.sigma_x, 2))
         y_part = math.pow(y - gaussian.y_c, 2) / (2 * math.pow(gaussian.sigma_y, 2))
-        return gaussian.a * math.exp(-(x_part + y_part))
+        return gaussian.a * math.exp(-(x_part + y_part)) + 0.1
 
     def density_callback(self, msg):
         # type: (Gaussian) -> None
@@ -215,7 +216,7 @@ class Voronoi:
             robot.control.control_law.clear_i()
             #robot.mass = self.get_density(node)*math.pow(self.graph.resolution, 2)
             self.priority_queue.put((node.power_dist, node, robot.id))
-
+            self.mark_node(node, robot)
             for q in node.neighbors:  # type: Node
                 if q is not node and not bool(set(q.obstacle_neighbors) & set(node.obstacle_neighbors)):
                     q.s = q
@@ -296,8 +297,8 @@ class Voronoi:
                 rospy.logerr("Obstacle id= " + str(robot.id) + " weight: " + str(robot.weight))
 
             for robot_neigh in robot.neighbors.values():  # type: Robot
-                if robot_neigh.id >= self.obstacle_id_start:
-                    continue
+                # if robot_neigh.id >= self.obstacle_id_start:
+                #     continue
                 kdel_neigh = robot_neigh.get_kdel()
                 kp_neigh = robot_neigh.control.get_kp()
                 if robot is robot_neigh:
@@ -306,28 +307,27 @@ class Voronoi:
             try:
                 w_del = - self.adapting_weight_constant / robot.mass * diff_sum * self.loop_time
             except ZeroDivisionError:
-                w_del = - 1000
+                w_del = 0
                 rospy.logerr("Zero division on adjusting weight of robot id=" + str(robot.id))
             w_del_robots.append(w_del)
 
         for robot, w_dot in zip(self.robots.values(), w_del_robots):  # type: (Robot, float)
-            if robot.id >= self.obstacle_id_start:
-                rospy.loginfo("wdel= " + str(w_dot))
-                robot.weight = robot.weight - math.fabs(w_dot)
-            else:
-                robot.weight += w_dot
+            #if robot.id >= self.obstacle_id_start:
+            #    rospy.loginfo("wdel= " + str(w_dot))
+            #    robot.weight = robot.weight - math.fabs(w_dot)
+            #else:
+            robot.weight += w_dot
             robot.weight_publisher.publish(robot.weight)
             robot.weight_publisher_str.publish(str(robot.weight))
-            node = self.graph.get_node(robot.get_pose_array())
-            mass = self.get_density(node)*math.pow(self.graph.resolution, 2)
-            if robot.weight < -100 or robot.mass <= mass*2:
-                del self.robots[robot.id]
-                if robot.id >= self.obstacle_id_start:
-                    self.graph.occ_grid[node.indexes[0], node.indexes[1]] = 100
-                    self.graph.build_graph()
-                    self.init_tesselation_image()
-                rospy.logerr("Removed robot {0} w={1}".format(str(robot.id), robot.weight))
-
+            # node = self.graph.get_node(robot.get_pose_array())
+            # mass = self.get_density(node)*math.pow(self.graph.resolution, 2)
+            # if (robot.weight < -100 or robot.mass <= mass*2) and robot.id >= self.obstacle_id_start:
+            #    del self.robots[robot.id]
+            #    if robot.id >= self.obstacle_id_start:
+            #        self.graph.occ_grid[node.indexes[0], node.indexes[1]] = 100
+            #        self.graph.build_graph()
+            #        self.init_tesselation_image()
+            #    rospy.logerr("Removed robot {0} w={1}".format(str(robot.id), robot.weight))
 
     def k_func(self, kp, kdel):
         return np.linalg.norm(kp + kdel)*np.sign(np.linalg.norm(kp))

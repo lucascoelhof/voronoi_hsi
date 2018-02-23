@@ -4,10 +4,10 @@
 	
 	<param name="robot_description" textfile="$(find epuck_driver)/urdf/epuck_urdf.xml"/>
 
-	<group ns="epuck_robot_0">
+	<group>
 		<include file="$(find epuck_driver)/launch/epuck_controller.launch">
 			<arg name="epuck_address" value="$(arg epuck_robot_0)"/>
-			<arg name="epuck_name" value="epuck_robot_0"/>
+			<arg name="epuck_name" value="robot_0"/>
 			<arg name="cam_en" value="false"/>
     		<arg name="acc_en" value="false"/>
     		<arg name="prox_en" value="false"/>
@@ -22,7 +22,9 @@
 			<arg name="theta" value="0.0"/>
 			<arg name="is_single_robot" value="0"/>
 		</include>
+
 		<!--<node pkg="tf" type="static_transform_publisher" name="epuck_robot_0_tf" args="0 0 0 0 0 0 /base_link /epuck_robot_0/base_link 30"/>-->
 	</group>
+
 
 </launch>

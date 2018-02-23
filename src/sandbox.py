@@ -61,7 +61,7 @@ from simulator_util import DraggablePoint
 #     return points_x, points_y
 
 
-image = plt.imread("/home/lady/Pictures/hex1.jpg")
+#image = plt.imread("/home/lady/Pictures/hex1.jpg")
 randimg = np.random.rand(100, 100)
 img = plt.imshow(image, extent=[4, 16, 5, 25], zorder=0, interpolation='nearest')
 
