@@ -17,4 +17,6 @@
     </group>
     <include file="$(find voronoi_hsi)/launch/voronoi_params8.launch"/>
     <include file="$(find voronoi_hsi)/launch/voronoi_common.launch" pass_all_args="true"/>
+
+    <node name="weight_plot" pkg="rqt_plot" type="rqt_plot" args="/voronoi/robot_0/weight /voronoi/robot_1/weight /voronoi/robot_2/weight /voronoi/robot_3/weight /voronoi/robot_4/weight /voronoi/robot_5/weight /voronoi/robot_6/weight /voronoi/robot_7/weight" />
 </launch>
