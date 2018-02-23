@@ -2,7 +2,7 @@ import json
 import numpy as np
 
 import rospy
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, String
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
@@ -30,6 +30,7 @@ class Robot:
         self.neighbors = {}
 
         self.weight_publisher = rospy.Publisher("/voronoi/robot_" + str(self.id) + "/weight", Float64, queue_size=1)
+        self.weight_publisher_str = rospy.Publisher("/voronoi/robot_" + str(self.id) + "/weight/str", String, queue_size=1)
 
         self.control = RobotControl()
 

@@ -317,6 +317,7 @@ class Voronoi:
             else:
                 robot.weight += w_dot
             robot.weight_publisher.publish(robot.weight)
+            robot.weight_publisher_str.publish(str(robot.weight))
             node = self.graph.get_node(robot.get_pose_array())
             mass = self.get_density(node)*math.pow(self.graph.resolution, 2)
             if robot.weight < -100 or robot.mass <= mass*2 and robot.id >= self.obstacle_id_start:
@@ -329,7 +330,7 @@ class Voronoi:
 
 
     def k_func(self, kp, kdel):
-        return np.linalg.norm(kp + kdel)/np.linalg.norm(kp)
+        return np.linalg.norm(kp + kdel)*np.sign(np.linalg.norm(kp))
 
     def get_density(self, node):
         # type: (Node) -> double
@@ -434,6 +435,7 @@ class Voronoi:
         self.semaphore.acquire()
         for gain in msg.robot_gain_list:  # type: RobotGain
             if gain.id in self.robots:
+                rospy.logwarn("Weight of robot {0} has changed".format(gain.id))
                 control_law = self.robots[gain.id].control.control_law  # type: ControlLawVoronoi
                 control_law.set_control_parameters(kv=gain.kp, d=control_law.d, kw=control_law.kw)
         self.semaphore.release()

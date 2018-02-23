@@ -1,2 +1,2 @@
-int16 id
-float32 kp
+int32 id
+float64 kp
