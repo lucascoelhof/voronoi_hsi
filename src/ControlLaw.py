@@ -24,7 +24,7 @@ class ControlLawDiff(object):
     def holo_to_diff(self, vx, vy, phi):
         # type: (float, float, float) -> tuple
         v = self.kv*(math.cos(phi)*vx + math.sin(phi)*vy)
-        w = self.kw*(-math.sin(phi)*vx/self.d + math.cos(phi)*vy/self.d)
+        w = self.kw*self.kv*(-math.sin(phi)*vx/self.d + math.cos(phi)*vy/self.d)
         return v, w
 
     def get_speed(self, pose_robot, pose_goal):

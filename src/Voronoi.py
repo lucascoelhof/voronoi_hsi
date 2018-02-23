@@ -330,7 +330,7 @@ class Voronoi:
 
 
     def k_func(self, kp, kdel):
-        return np.linalg.norm(kp + kdel)/np.linalg.norm(kp)
+        return np.linalg.norm(kp + kdel)*np.sign(np.linalg.norm(kp))
 
     def get_density(self, node):
         # type: (Node) -> double
