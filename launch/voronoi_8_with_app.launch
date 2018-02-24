@@ -1,6 +1,6 @@
 <launch>
     <arg name="real_robot" default="false"/>
+    <arg name="record" default="false"/>
     <include file="$(find voronoi_hsi)/launch/voronoi_8.launch" pass_all_args="true"/>
     <node name="voronoi_node" pkg="voronoi_hsi" type="voronoi_h.py" output="screen"/>
-    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
 </launch>

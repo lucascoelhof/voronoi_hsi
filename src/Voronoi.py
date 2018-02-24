@@ -1,3 +1,4 @@
+import os
 import math
 import numpy as np
 import random
@@ -64,6 +65,14 @@ class Voronoi:
         self.img_width = 0
         self.img_height = 0
         self.robot_color = [50, 50, 50]
+
+        h_file = os.path.abspath(os.path.join(os.path.abspath(__file__), os.pardir, os.pardir, 'h.txt'))
+        w_file = os.path.abspath(os.path.join(os.path.abspath(__file__), os.pardir, os.pardir, 'w.txt'))
+        print(h_file, w_file)
+        self.h_file = open(h_file, 'w')
+        self.w_file = open(w_file, 'w')
+
+        self.time_begin = rospy.Time.now()
 
         self.init_density_dist()
         self.init_tesselation_image()
@@ -278,6 +287,8 @@ class Voronoi:
         time_diff = (rospy.Time.now() - begin).to_sec()
         rospy.loginfo("Finished! iter=" + str(iterations) + ",h = " + str(h_func) + ", " + str(time_diff) + "s")
         self.semaphore.release()
+        self.h_file.write("{0} {1}\n".format(str(h_func), str((rospy.Time.now() - self.time_begin).to_sec())))
+        self.h_file.flush()
         return h_func
 
     def robot_reached_goal(self, robot):
@@ -319,6 +330,8 @@ class Voronoi:
             robot.weight += w_dot
             robot.weight_publisher.publish(robot.weight)
             robot.weight_publisher_str.publish(str(robot.weight))
+            self.w_file.write("{0} {1} {2}\n".format(str(robot.weight), str(robot.id), str((rospy.Time.now() - self.time_begin).to_sec())))
+            self.w_file.flush()
             # node = self.graph.get_node(robot.get_pose_array())
             # mass = self.get_density(node)*math.pow(self.graph.resolution, 2)
             # if (robot.weight < -100 or robot.mass <= mass*2) and robot.id >= self.obstacle_id_start:

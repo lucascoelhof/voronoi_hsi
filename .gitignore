@@ -25,3 +25,7 @@ src/\.idea/modules\.xml
 src/\.idea/src\.iml
 
 src/\.idea/workspace\.xml
+
+*.bag
+
+sim/*

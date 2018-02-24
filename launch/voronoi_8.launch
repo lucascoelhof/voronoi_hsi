@@ -1,10 +1,11 @@
 <launch>
     <arg name="real_robot" default="false"/>
+    <arg name="record" default="false"/>
     <group unless="$(arg real_robot)">
         <param name="/use_sim_time" value="true"/>
         <node name="stage" pkg="stage_ros" type="stageros" args="$(find voronoi_hsi)/worlds/eight_voronoi.world"/>
     </group>
-    <group if="$(arg real_robot)">
+    <group if="$(arg real_robot)">f
         <param name="/use_sim_time" value="false"/>
         <!--include file="$(find voronoi_hsi)/launch/epuck/epuck_0.launch"/>
         <include file="$(find voronoi_hsi)/launch/epuck/epuck_1.launch"/>
