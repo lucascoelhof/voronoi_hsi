@@ -6,6 +6,8 @@ from ar_track_alvar_msgs.msg import AlvarMarkers, AlvarMarker
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Pose
 
+import Util
+
 
 class ArTrackToOdom(object):
 
@@ -16,6 +18,7 @@ class ArTrackToOdom(object):
         self.mult = [15.5, 15.5, 1]
         self.robot_prefix = "robot_"
         self.robot_suffix = "/base_pose_ground_truth"
+        self.tf_root = "/map"
 
     def tracker_callback(self, msg):
         # type: (AlvarMarkers) -> None
@@ -23,6 +26,7 @@ class ArTrackToOdom(object):
             id = marker.id
             odom = Odometry()
             odom.pose.pose = self.odom_operations(marker.pose.pose)
+            Util.publish_tf_transformation(odom.pose.pose, self.robot_prefix + str(id) + "/odom", self.tf_root)
             if not id in self.odom_publishers:
                 self.odom_publishers[id] = rospy.Publisher(self.robot_prefix + str(id) + self.robot_suffix, Odometry, queue_size=1)
             self.odom_publishers[id].publish(odom)
@@ -45,7 +49,7 @@ class ArTrackToOdom(object):
         pose.orientation.y = quat[1]
         pose.orientation.z = quat[2]
         pose.orientation.w = quat[3]
-        pose.orientation = origin.orientation
+        # pose.orientation = origin.orientation
         return pose
 
 

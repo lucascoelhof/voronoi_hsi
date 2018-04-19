@@ -7,14 +7,14 @@
     </group>
     <group if="$(arg real_robot)">f
         <param name="/use_sim_time" value="false"/>
-        <!--include file="$(find voronoi_hsi)/launch/epuck/epuck_0.launch"/>
-        <include file="$(find voronoi_hsi)/launch/epuck/epuck_1.launch"/>
-        <include file="$(find voronoi_hsi)/launch/epuck/epuck_2.launch"/>
-        <include file="$(find voronoi_hsi)/launch/epuck/epuck_3.launch"/>
-        <include file="$(find voronoi_hsi)/launch/epuck/epuck_4.launch"/>
-        <include file="$(find voronoi_hsi)/launch/epuck/epuck_5.launch"/>
-        <include file="$(find voronoi_hsi)/launch/epuck/epuck_6.launch"/>
-        <include file="$(find voronoi_hsi)/launch/epuck/epuck_7.launch"/-->
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck0.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck1.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck2.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck3.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck4.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck5.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck6.launch"/>
+        <include file="$(find voronoi_hsi)/launch/epuck/epuck7.launch"/>
     </group>
     <include file="$(find voronoi_hsi)/launch/voronoi_params8.launch"/>
     <include file="$(find voronoi_hsi)/launch/voronoi_common.launch" pass_all_args="true"/>
