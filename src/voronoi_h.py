@@ -10,7 +10,7 @@ class VoronoiRunner(object):
 
     def __init__(self):
         rospy.init_node('voronoi')
-        self.loop_time = 0.5
+        self.loop_time = 2 # increase it 0.5s -> 5s
         self.h_pub = rospy.Publisher("/voronoi/h_func", Float64, queue_size=1)
         self.voronoi = Voronoi(self.loop_time)
         self.iterations = 0
@@ -28,6 +28,7 @@ class VoronoiRunner(object):
     def loop(self, event):
         list_robots = []
         for robot in self.voronoi.robots.values():
+            list_robots.append(robot.id)
             if self.voronoi.robot_reached_goal(robot):
                 list_robots.append(robot.id)
                 rospy.loginfo("Robot " + str(robot.id) + " has reached goal")
