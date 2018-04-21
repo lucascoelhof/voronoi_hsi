@@ -29,3 +29,7 @@ src/\.idea/workspace\.xml
 *.bag
 
 sim/*
+
+h\.txt
+
+w\.txt
