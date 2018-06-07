@@ -277,7 +277,9 @@ class Voronoi:
                 best_node = self.get_best_aligned_node(control_integral, robot_node)  # type: Node
                 if best_node is None:
                     rospy.logerr("Best node is none robot_" + str(robot.id))
-                    continue
+                    node_l = self.get_largest_weight_neighbor(robot_node)
+                    if node_l is not None:
+                        robot.control.set_goal(node_l.pose)
                 else:
                     robot.control.set_goal(best_node.pose)
 
@@ -361,6 +363,16 @@ class Voronoi:
                 max_dpi = dpi
                 best_node = n
         return best_node
+
+    def get_largest_weight_neighbor(self, node):
+        # type: (Node) -> Node
+        cost = float("-inf")
+        ans = None
+        for n in node.neighbors:   # type: Node
+            if n.power_dist > cost:
+                cost = n.power_dist
+                ans = n
+        return ans
 
     def clear(self):
         self.graph.clear_graph()
