@@ -1,0 +1,84 @@
+define erratic position
+(
+  size [0.300 0.300 0.500]
+  block
+  (
+	points 8
+	point[7] [0.25 0]
+	point[6] [0 0.25]
+	point[5] [0 0.75]
+	point[4] [0.25 1]
+	point[3] [0.75 1]
+	point[2] [1 0.75]
+	point[1] [1 0.25]
+	point[0] [0.75 0]
+	z [0 1]
+  )
+
+  origin [0.000 0.000 0.000 0.000]
+  gui_nose 1
+  drive "diff"
+  obstacle_return 0
+)
+
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+
+  gui_outline 0
+  gripper_return 0
+  fiducial_return 0
+)
+
+# set the resolution of the underlying raytrace model in meters
+resolution 0.02
+
+interval_sim 100  # simulation timestep in milliseconds
+
+
+window
+( 
+  size [ 800 600 ] 
+
+  rotate [ 0.000 0.000 ]
+  center [ 6.490  4.976 ]
+  scale 51.875 
+)
+
+# load an environment bitmap
+floorplan
+( 
+  name "willow"
+  bitmap "../launch/map.pgm"
+  size [20.000 20.000 0.500]
+  pose [10.000 10.000 0.000 0.000]
+)
+
+# throw in two robots
+erratic( pose [ 1.410 1.029 0.000 -18.570 ] name "robot_0" color "black")
+erratic( pose [ 5.429 1.068 0.000 -45.000 ] name "robot_1" color "black")
+erratic( pose [ 3.361 5.290 0.000 135.598 ] name "robot_2" color "black")
+erratic( pose [ 6.326 6.501 0.000 45.955 ] name "robot_3" color "black")
+erratic( pose [ 6.573 2.560 0.000 -23.486 ] name "robot_4" color "black")
+erratic( pose [ 3.578 2.601 0.000 53.261 ] name "robot_5" color "black")
+erratic( pose [ 5.303 4.981 0.000 66.546 ] name "robot_6" color "black")
+erratic( pose [ 3.402 3.737 0.000 -47.949 ] name "robot_7" color "black")
+erratic( pose [ 1.478 3.728 0.000 -74.436 ] name "robot_8" color "black")
+erratic( pose [ 5.275 2.360 0.000 -47.358 ] name "robot_9" color "black")
+erratic( pose [ 1.473 6.966 0.000 133.218 ] name "robot_10" color "black")
+erratic( pose [ 6.514 3.721 0.000 -137.756 ] name "robot_11" color "black")
+erratic( pose [ 5.311 3.483 0.000 -29.715 ] name "robot_12" color "black")
+erratic( pose [ 3.469 1.148 0.000 77.152 ] name "robot_13" color "black")
+erratic( pose [ 5.205 6.560 0.000 54.042 ] name "robot_14" color "black")
+erratic( pose [ 1.450 5.163 0.000 -42.677 ] name "robot_15" color "black")
+erratic( pose [ 1.586 2.418 0.000 -51.215 ] name "robot_16" color "black")
+erratic( pose [ 6.587 1.241 0.000 -45.612 ] name "robot_17" color "black")
+erratic( pose [ 3.526 6.668 0.000 49.787 ] name "robot_18" color "black")
+erratic( pose [ 6.444 5.059 0.000 -135.321 ] name "robot_19" color "black")

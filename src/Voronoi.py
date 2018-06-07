@@ -198,7 +198,7 @@ class Voronoi:
     @staticmethod
     def power_dist(x, r):
         # type: (float, float) -> float
-        return pow(x, 2) - math.fabs(r)/r*pow(r, 2)
+        return pow(x, 2) - np.sign(r)*math.pow(r, 2)
 
     def publish_voronoi(self):
         voro_tess = VoronoiTesselation()
