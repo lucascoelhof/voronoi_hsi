@@ -6,7 +6,7 @@ Multi **robot coverage control** in non-convex environments using **ROS**.
 
 This is a ROS implementation of a multi-robot coverage control strategy based in [[1]](http://journals.sagepub.com/doi/full/10.1177/0278364913507324) and [[2]](http://sites.bu.edu/msl/files/2014/10/PiersonFigueiredoPimentaSchwagerICRA15.pdf) to address coverage in non-convex environments and adapt to performance variations.
 
-It also has a add-on software that allows humans to interact with the robotic swarm, influencing their coverage task using Unity: [Voronoi Unity Teleoperation](https://github.com/lucascoelhof/VoronoiUnityTeleoperation)
+It also has an add-on software for Unity that allows humans to interact with the robotic swarm, influencing their coverage task: [Voronoi Unity Teleoperation](https://github.com/lucascoelhof/VoronoiUnityTeleoperation)
 
 ## Getting started
 
@@ -42,5 +42,6 @@ run the VR application.
 This project is distibuted under the [BSD 3-Clause License](LICENSE).
 
 ## References
+
 1. [Bhattacharya, S., Ghrist, R. and Kumar, V., 2014. Multi-robot coverage and exploration on Riemannian manifolds with boundaries. The International Journal of Robotics Research, 33(1), pp.113-137.](http://journals.sagepub.com/doi/full/10.1177/0278364913507324)
 2. [Pierson, A., Figueiredo, L.C., Pimenta, L.C. and Schwager, M., 2015, May. Adapting to performance variations in multi-robot coverage. In Robotics and Automation (ICRA), 2015 IEEE International Conference on (pp. 415-420). IEEE.](http://sites.bu.edu/msl/files/2014/10/PiersonFigueiredoPimentaSchwagerICRA15.pdf)
