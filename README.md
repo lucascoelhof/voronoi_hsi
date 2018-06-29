@@ -8,7 +8,7 @@ This is a ROS implementation of a multi-robot coverage control strategy based in
 
 It also has a add-on software that allows humans to interact with the robotic swarm, influencing their coverage task using Unity: [Voronoi Unity Teleoperation](https://github.com/lucascoelhof/VoronoiUnityTeleoperation)
 
-# Getting started
+## Getting started
 
 Dependencies:
 
@@ -29,7 +29,7 @@ If you want to use real robots (epucks) instead of simulating it on Stage, you w
 roslaunch voronoi_hsi voronoi_8_with_app.launch real_robot:=true
 ```
 
-# Human-Swarm Interaction integration
+## Human-Swarm Interaction Integration
 
 This application can run standalone, but it can also run integrated with a VR application, which allows users to interact with the
 robotic swarm in the coverage task.
@@ -37,7 +37,10 @@ robotic swarm in the coverage task.
 Please follow instructions at [Voronoi Unity Teleoperation](https://github.com/lucascoelhof/VoronoiUnityTeleoperation) to setup and
 run the VR application.
 
+## License
 
-# References
+This project is distibuted under the [BSD 3-Clause License](LICENSE).
+
+## References
 1. [Bhattacharya, S., Ghrist, R. and Kumar, V., 2014. Multi-robot coverage and exploration on Riemannian manifolds with boundaries. The International Journal of Robotics Research, 33(1), pp.113-137.](http://journals.sagepub.com/doi/full/10.1177/0278364913507324)
 2. [Pierson, A., Figueiredo, L.C., Pimenta, L.C. and Schwager, M., 2015, May. Adapting to performance variations in multi-robot coverage. In Robotics and Automation (ICRA), 2015 IEEE International Conference on (pp. 415-420). IEEE.](http://sites.bu.edu/msl/files/2014/10/PiersonFigueiredoPimentaSchwagerICRA15.pdf)
