@@ -15,7 +15,7 @@ Dependencies:
 * [Stage](http://wiki.ros.org/stage)
 * [matplotlib](https://matplotlib.org/)
 * [ar_track_alvar](http://wiki.ros.org/ar_track_alvar)
-* [gctronic/epuck_driver_cpp](https://github.com/gctronic/epuck_driver_cpp)
+* [gctronic/epuck_driver](https://github.com/gctronic/epuck_driver)
 
 Download the code, place it on your catkin environment, compile it using ``catkin_make`` and run using:
 
@@ -23,7 +23,7 @@ Download the code, place it on your catkin environment, compile it using ``catki
 roslaunch voronoi_hsi voronoi_8_with_app.launch
 ```
 
-If you want to use real robots (epucks) instead of simulating it on Stage, you will need the driver [gctronic/epuck_driver_cpp](https://github.com/gctronic/epuck_driver_cpp). Run it using:
+If you want to use real robots (epucks) instead of simulating it on Stage, you will need the driver [gctronic/epuck_driver](https://github.com/gctronic/epuck_driver). Run it using:
 
 ```
 roslaunch voronoi_hsi voronoi_8_with_app.launch real_robot:=true
