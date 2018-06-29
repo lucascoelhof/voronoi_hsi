@@ -1,24 +1,33 @@
 # Voronoi HSI (Human-Swarm Interaction)
 
-Multi robot coverage control in non-convex environments using ROS.
+Multi **robot coverage control** in non-convex environments using **ROS**.
 
-This is a ROS implementation of a multi-robot coverage control strategy based in [1] and [2] to address coverage in non-convex
-environments and adapt to performance variations. It also has a plugin software that allows humans to interact with the robotic
-swarm, influencing their coverage task.
+![Voronoi HSI Example](assets/voronoi_hsi-example.jpg)
+
+This is a ROS implementation of a multi-robot coverage control strategy based in [[1]](http://journals.sagepub.com/doi/full/10.1177/0278364913507324) and [[2]](http://sites.bu.edu/msl/files/2014/10/PiersonFigueiredoPimentaSchwagerICRA15.pdf) to address coverage in non-convex environments and adapt to performance variations.
+
+It also has a add-on software that allows humans to interact with the robotic swarm, influencing their coverage task using Unity: [Voronoi Unity Teleoperation](https://github.com/lucascoelhof/VoronoiUnityTeleoperation)
 
 # Getting started
-Dependencies:
-* Stage
-* matplotlib
 
-Download the code, compile it and run using:
+Dependencies:
+
+* [Stage](http://wiki.ros.org/stage)
+* [matplotlib](https://matplotlib.org/)
+* [ar_track_alvar](http://wiki.ros.org/ar_track_alvar)
+* [gctronic/epuck_driver_cpp](https://github.com/gctronic/epuck_driver_cpp)
+
+Download the code, place it on your catkin environment, compile it using ``catkin_make`` and run using:
+
 ```
 roslaunch voronoi_hsi voronoi_8_with_app.launch
 ```
 
-We've also developed experiment using the e-puck robot and a driver available at [gctronic/epuck_driver_cpp
-](https://github.com/gctronic/epuck_driver_cpp).
+If you want to use real robots (epucks) instead of simulating it on Stage, you will need the driver [gctronic/epuck_driver_cpp](https://github.com/gctronic/epuck_driver_cpp). Run it using:
 
+```
+roslaunch voronoi_hsi voronoi_8_with_app.launch real_robot:=true
+```
 
 # Human-Swarm Interaction integration
 
@@ -30,5 +39,5 @@ run the VR application.
 
 
 # References
-1. Bhattacharya, S., Ghrist, R. and Kumar, V., 2014. Multi-robot coverage and exploration on Riemannian manifolds with boundaries. The International Journal of Robotics Research, 33(1), pp.113-137.
-2. Pierson, A., Figueiredo, L.C., Pimenta, L.C. and Schwager, M., 2015, May. Adapting to performance variations in multi-robot coverage. In Robotics and Automation (ICRA), 2015 IEEE International Conference on (pp. 415-420). IEEE.
+1. [Bhattacharya, S., Ghrist, R. and Kumar, V., 2014. Multi-robot coverage and exploration on Riemannian manifolds with boundaries. The International Journal of Robotics Research, 33(1), pp.113-137.](http://journals.sagepub.com/doi/full/10.1177/0278364913507324)
+2. [Pierson, A., Figueiredo, L.C., Pimenta, L.C. and Schwager, M., 2015, May. Adapting to performance variations in multi-robot coverage. In Robotics and Automation (ICRA), 2015 IEEE International Conference on (pp. 415-420). IEEE.](http://sites.bu.edu/msl/files/2014/10/PiersonFigueiredoPimentaSchwagerICRA15.pdf)
