@@ -4,7 +4,7 @@ Multi **robot coverage control** in non-convex environments using **ROS**.
 
 ![Voronoi HSI Example](assets/voronoi_hsi-example.jpg)
 
-This is a ROS implementation of a multi-robot coverage control strategy based in [[1]](http://journals.sagepub.com/doi/full/10.1177/0278364913507324) and [[2]](http://sites.bu.edu/msl/files/2014/10/PiersonFigueiredoPimentaSchwagerICRA15.pdf) to address coverage in non-convex environments and adapt to performance variations.
+This is a ROS implementation of a multi-robot coverage control strategy based in for the paper [Voronoi Multi-Robot Coverage Control in Non-Convex Environments With Human Interaction in Virtual Reality](https://www.researchgate.net/publication/329624395_VORONOI_MULTI-ROBOT_COVERAGE_CONTROL_IN_NON-CONVEX_ENVIRONMENTS_WITH_HUMAN_INTERACTION_IN_VIRTUAL_REALITY) to address coverage in non-convex environments and adapt to performance variations.
 
 It also has an add-on software for Unity that allows humans to interact with the robotic swarm, influencing their coverage task: [Voronoi Unity Teleoperation](https://github.com/lucascoelhof/VoronoiUnityTeleoperation)
 
@@ -41,7 +41,17 @@ run the VR application.
 
 This project is distibuted under the [BSD 3-Clause License](LICENSE).
 
-## References
+## Acknowlegement
 
-1. [Bhattacharya, S., Ghrist, R. and Kumar, V., 2014. Multi-robot coverage and exploration on Riemannian manifolds with boundaries. The International Journal of Robotics Research, 33(1), pp.113-137.](http://journals.sagepub.com/doi/full/10.1177/0278364913507324)
-2. [Pierson, A., Figueiredo, L.C., Pimenta, L.C. and Schwager, M., 2015, May. Adapting to performance variations in multi-robot coverage. In Robotics and Automation (ICRA), 2015 IEEE International Conference on (pp. 415-420). IEEE.](http://sites.bu.edu/msl/files/2014/10/PiersonFigueiredoPimentaSchwagerICRA15.pdf)
+If you found this code useful for your scientific research, please remind to cite the paper that originated this code implementation:
+```
+@inproceedings{inproceedings,
+author = {Figueiredo, Lucas and Lelis de Carvalho, Italo and Pimenta, Luciano},
+year = {2018},
+month = {01},
+pages = {},
+title = {VORONOI MULTI-ROBOT COVERAGE CONTROL IN NON-CONVEX ENVIRONMENTS WITH HUMAN INTERACTION IN VIRTUAL REALITY},
+doi = {10.20906/CPS/CBA2018-0563}
+}
+```
+
